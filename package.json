@@ -1,5 +1,9 @@
 {
   "dependencies": {
-    "dotenv": "^16.3.1"
+    "@noble/ed25519": "^1.7.1",
+    "dotenv": "^16.0.3",
+    "nodemailer": "^6.8.0",
+    "nonce-next": "^1.1.0",
+    "strftime": "^0.10.1"
   }
 }
