@@ -16,7 +16,7 @@ class CustodiansController {
     this.public_key = env.DLT_PUBLIC_KEY;
     this.private_key = env.DLT_PRIVATE_KEY;
   }
-  async dlt_request(from_date = null, to_date = null) {
+  async dlt_request(from_date, to_date) {
     let nonce = nonce_lib.generate() * 10000;
     let page = 0;
     let limit = 500;
@@ -45,9 +45,7 @@ class CustodiansController {
       `GET/v1/report/custody/client/deposits?from=${from}&to=${to}&state=done&page=${page}&limit=${limit}${nonce}`
     );
 
-    const decoded_signature = stringToByteArray(
-      this.private_key.substring(0, 64)
-    );
+    const decoded_signature = stringToByteArray(this.private_key.substring(0, 64));
 
     let signature = await getSignature(decoded_message, decoded_signature);
     signature = byteArrayToHexString(signature);
