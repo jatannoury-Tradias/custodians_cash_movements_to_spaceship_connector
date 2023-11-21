@@ -1,3 +1,5 @@
+const get_local_data = require("../helpers/get_local_data");
+
 require("dotenv").config();
 
 const env = process.env;
@@ -38,16 +40,26 @@ class SpaceshipController {
       Authorization: `Bearer ${this.user_token}`,
     };
   }
-  async get_clients_addresses() {
-    let response = await fetch(
-      `https://${this.env.toLowerCase()}.tradias.link/api/addresses/`,
-      {
-        method: "GET",
-        headers: await this.user_headers(),
-      }
-    );
+  async get_clients_addresses(return_static_response = false) {
+    let response;
+    let json_response;
+    if (return_static_response) {
+      response = await get_local_data("prod_addresses");
+    } else {
+      response = await fetch(
+        `https://${this.env.toLowerCase()}.tradias.link/api/addresses/`,
+        {
+          method: "GET",
+          headers: await this.user_headers(),
+        }
+      );
+    }
 
-    let json_response = await response.json();
+    try {
+      json_response = await response.json();
+    } catch (e) {
+      json_response = response;
+    }
     await this.get_custodians();
     this.clients_addresses = {};
     for (let item of json_response["items"]) {
@@ -75,5 +87,12 @@ class SpaceshipController {
     return response;
   }
 }
-let c = new SpaceshipController();
-c.get_clients_addresses();
+async function spaceship_addresses_caller() {
+  c = new SpaceshipController();
+  let data = await c.get_clients_addresses(true);
+  console.log(data);
+}
+if (require.main === module) {
+  spaceship_addresses_caller();
+}
+module.exports = SpaceshipController;
