@@ -1,0 +1,33 @@
+const TanganyParams = require("../config/tangany_params");
+const sleep = require("../utils/sleep");
+
+class TanganyController extends TanganyParams {
+  constructor() {
+    super();
+  }
+  async do_eth_request(url, params) {
+    Object.keys(params).forEach((key) => {
+      url += `${key}=${params[key]}&`;
+    });
+    return await fetch(url).then((res) => {
+      return res.json();
+    });
+  }
+  async eth_request(url) {
+    const {
+      ETH_ERCTOKEN_queryParams,
+      ETH_INTERNAL_queryParams,
+      ETH_NORMAL_queryParams,
+    } = await this.get_eth_params();
+    await sleep(5000);
+    let erc_request = await this.do_eth_request(url, ETH_ERCTOKEN_queryParams);
+    let int_request = await this.do_eth_request(url, ETH_INTERNAL_queryParams);
+    let normal_request = await this.do_eth_request(url, ETH_NORMAL_queryParams);
+    return [
+      ...erc_request["result"],
+      ...int_request["result"],
+      ...normal_request["result"],
+    ];
+  }
+}
+module.exports = TanganyController;

@@ -16,6 +16,9 @@ class CustodiansController extends CustodiansInputsParser {
   async dlt_withdrawals(from_date = null, to_date = null) {
     return await this.make_dlt_api_request("withdrawals", from_date, to_date);
   }
+  async eth_transactions(from_date = null, to_date = null){
+    return await this.make_tangany_api_request("withdrawals", from_date, to_date);
+  }
 }
 async function custodians_caller() {
   c = new CustodiansController();
