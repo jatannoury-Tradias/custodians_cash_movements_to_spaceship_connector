@@ -10,7 +10,8 @@ class CustodiansController extends CustodiansInputsParser {
   }
 
   async dlt_deposits(from_date = null, to_date = null) {
-    return await this.make_dlt_api_request("deposits", from_date, to_date);
+    const response = await this.make_dlt_api_request("deposits", from_date, to_date);
+    return response
   }
   async dlt_withdrawals(from_date = null, to_date = null) {
     return await this.make_dlt_api_request("withdrawals", from_date, to_date);

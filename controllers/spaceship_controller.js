@@ -32,6 +32,17 @@ class SpaceshipController {
     this.user_token = json_response["auth_token"];
     return response;
   }
+  async get_clients() {
+    let headers = await this.user_headers();
+    let response = await fetch(
+      `https://${this.env.toLowerCase()}.tradias.link/api/clients/?skip=0&limit=1000`,
+      {
+        method: "GET",
+        headers: headers,
+      }
+    );
+    return response;
+  }
   async user_headers() {
     if (this.user_token === null) {
       await this.get_user_token();
@@ -47,7 +58,7 @@ class SpaceshipController {
       response = await get_local_data("prod_addresses");
     } else {
       response = await fetch(
-        `https://${this.env.toLowerCase()}.tradias.link/api/addresses/`,
+        `https://${this.env.toLowerCase()}.tradias.link/api/addresses/?limit=1000`,
         {
           method: "GET",
           headers: await this.user_headers(),
@@ -70,6 +81,32 @@ class SpaceshipController {
     }
 
     return response;
+  }
+  async post_transaction(cash_mvt) {
+    let response = await fetch(
+      `https://${this.env.toLowerCase()}.tradias.link/api/transactions`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(await this.user_headers()),
+        },
+        body: JSON.stringify({
+          value_date: parseInt(
+            new Date(cash_mvt["compliance_received_at"]).getTime() / 1000
+          ),
+          sender_address_id: cash_mvt["source_address_id"],
+          receiver_address_id: cash_mvt["destination_address_id"],
+          amount: cash_mvt["compliance_amount"],
+          currency: cash_mvt["currency_code"].toUpperCase(),
+          reference: "SepaDescription",
+          reference_type: "ON_CHAIN_TRANSACTION_ID",
+          type: "SETTLEMENT",
+        }),
+      }
+    );
+
+    let json_response = await response.json();
   }
   async get_custodians() {
     let response = await fetch(

@@ -14,7 +14,7 @@ class CustodianResponseParser {
     reference
   ) {
     const source_address_is_client_address =
-      Object.keys(clients_wallets).includes(source_address);
+        Object.keys(clients_wallets).includes(source_address);
     const source_address_is_tradias_address =
       Object.keys(tradias_wallets).includes(source_address);
     const destination_address_is_client_address =
@@ -38,8 +38,13 @@ class CustodianResponseParser {
       return;
     }
     if (cash_mvt_type === "DEPOSIT") {
-      if (source_address_is_client_address) {
-        this.clients_deposits.push({...cash_mvt,client_spaceship_id:clients_wallets[source_address]['owner_id']});
+      if (source_address_is_client_address && destination_address_is_tradias_address) {
+        this.clients_deposits.push({
+          ...cash_mvt,
+          client_spaceship_id: clients_wallets[source_address]["owner_id"],
+          source_address_id: clients_wallets[source_address]["id"],
+          destination_address_id: tradias_wallets[destination_address]["id"],
+        });
       } else {
         this.wallets_with_no_spaceship_mapping.push({
           currency: cash_mvt.currency_code.toUpperCase(),
@@ -51,8 +56,13 @@ class CustodianResponseParser {
         });
       }
     } else {
-      if (destination_address_is_client_address) {
-        this.clients_withdrawals.push({...cash_mvt,client_spaceship_id:clients_wallets[source_address]['owner_id']});
+      if (destination_address_is_client_address && source_address_is_tradias_address) {
+        this.clients_withdrawals.push({
+          ...cash_mvt,
+          client_spaceship_id: clients_wallets[source_address]["owner_id"],
+          sender_address_id: clients_wallets[source_address]["id"],
+          destination_address_id: tradias_wallets[destination_address]["id"],
+        });
       } else {
         this.wallets_with_no_spaceship_mapping.push({
           currency: cash_mvt.currency_code.toUpperCase(),
@@ -66,16 +76,15 @@ class CustodianResponseParser {
     }
     console.log();
   }
-  dlt_response_parser(dlt_deposits, dlt_withdrawals) {
+  async dlt_response_parser(dlt_deposits, dlt_withdrawals) {
     const client_addresses = Object.keys(
       this.spaceship_controller.clients_addresses
     );
     const { clients_wallets, tradias_wallets } =
-      this.get_clients_and_tradias_wallets();
+      await this.get_clients_and_tradias_wallets();
     dlt_deposits.forEach((cash_mvt) => {
       const destination_address = cash_mvt["deposit_address"];
       const source_address = cash_mvt["deposit_sources"][0]["address"];
-
       this.dlt_cash_mvt_mapper(
         cash_mvt,
         source_address,

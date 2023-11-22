@@ -12,17 +12,31 @@ class FlowController extends CustodianResponseParser {
     this.tradias_wallets = null;
     this.clients_wallets = null;
   }
-  get_clients_and_tradias_wallets() {
+  async get_clients_and_tradias_wallets() {
     if (this.clients_wallets !== null && this.tradias_wallets !== null) {
       return {
         clients_wallets: this.clients_wallets,
         tradias_wallets: this.tradias_wallets,
       };
     }
+    const spaceship_clients = await this.spaceship_controller.get_clients();
+    let owner_id_to_name_map = await spaceship_clients.json();
+    owner_id_to_name_map = owner_id_to_name_map["items"].reduce(
+      (result, client_object) => {
+        let client_id = client_object["id"];
+        result[client_id] = client_object["name"];
+        return result;
+      },
+      {}
+    );
+
     let tradias_wallets = Object.values(
       this.spaceship_controller.clients_addresses
     )
-      .filter((address) => address["label"].toLowerCase().includes("- pool"))
+      .filter(
+        (address) =>
+          owner_id_to_name_map[address["owner_id"]] === "Tradias GmbH"
+      )
       .reduce((result, addressObj) => {
         const label = addressObj.address;
         result[label] = addressObj;
@@ -31,7 +45,10 @@ class FlowController extends CustodianResponseParser {
     const clients_wallets = Object.values(
       this.spaceship_controller.clients_addresses
     )
-      .filter((address) => !address["label"].toLowerCase().includes("- pool"))
+      .filter(
+        (address) =>
+          owner_id_to_name_map[address["owner_id"]] !== "Tradias GmbH"
+      )
       .reduce((result, addressObj) => {
         const label = addressObj.address;
         result[label] = addressObj;
@@ -41,18 +58,17 @@ class FlowController extends CustodianResponseParser {
   }
 
   async custodians_cash_mvts_to_spaceship_wallets_resolver() {
-    let dlt_deposits = await this.custodians_controller.dlt_deposits(
-      "2023-10-01 00:00:00",
-      "2023-11-18 00:00:00"
-    );
-    let dlt_withdrawals = await this.custodians_controller.dlt_withdrawals(
-      "2023-10-01 00:00:00",
-      "2023-11-18 00:00:00"
-    );
-    await this.spaceship_controller.get_clients_addresses(true);
+    let dlt_deposits = await this.custodians_controller.dlt_deposits();
+    let dlt_withdrawals = await this.custodians_controller.dlt_withdrawals();
+    await this.spaceship_controller.get_clients_addresses(false);
     const { clients_id_to_withdrawal_mapping, clients_id_to_deposit_mapping } =
-      this.dlt_response_parser(dlt_deposits, dlt_withdrawals);
+      await this.dlt_response_parser(dlt_deposits, dlt_withdrawals);
     console.log();
+  }
+  async push_transactions(cash_mvts) {
+    await cash_mvts.forEach(async (cash_mvt) => {
+      await this.spaceship_controller.post_transaction(cash_mvt);
+    });
   }
 }
 module.exports = FlowController;

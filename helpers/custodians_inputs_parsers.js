@@ -66,7 +66,7 @@ class CustodiansInputsParser extends CustodiansRequests {
   async parse_dlt_request_inputs(from_date, to_date, request_type) {
     let nonce = nonce_lib.generate() * 10000;
     let page = 0;
-    let limit = 500;
+    let limit = 100000;
 
     const { yesterday, today } = this.check_for_input_dates(from_date, to_date);
     let from_input = yesterday.split(" ");

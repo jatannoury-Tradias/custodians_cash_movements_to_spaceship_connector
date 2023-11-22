@@ -85,6 +85,11 @@ def push_addresses(env, csv_path):
         if client_address == None:
             print(f"Skipping {row['Account Holder']}")
             continue
+        if row['Account Holder'].casefold() == "tradias gmbh":
+            label = f'{row["name"]} - Pool Wallet'
+        else:
+            label = f'{row["custodian"]} - {row[""]}'
+
         res = requests.post(f"https://{env}.tradias.link/api/addresses",
                         headers={
                             "Authorization": f"Bearer {token}",
