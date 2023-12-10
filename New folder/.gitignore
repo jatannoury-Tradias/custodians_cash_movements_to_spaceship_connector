@@ -1,0 +1,16 @@
+/node_modules
+/.env
+/data/external_data/__init__.py
+/data/external_data/airtable_data.csv
+/.idea/aws.xml
+/config/currencies.py
+/.idea/custodians_cash_movements_to_spaceship_connector.iml
+/.idea/misc.xml
+/.idea/modules.xml
+/data/static_data/prod_addresses_response.json
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/test.js
+/test.py
+/test_1.js
+/.idea/vcs.xml

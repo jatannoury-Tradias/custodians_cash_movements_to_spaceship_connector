@@ -35,18 +35,7 @@ class SpaceshipController {
   async get_clients() {
     let headers = await this.user_headers();
     let response = await fetch(
-      `https://${this.env.toLowerCase()}.tradias.link/api/clients/?skip=0&limit=1000&show_deleted=false`,
-      {
-        method: "GET",
-        headers: headers,
-      }
-    );
-    return response;
-  }
-  async get_deleted_clients() {
-    let headers = await this.user_headers();
-    let response = await fetch(
-      `https://${this.env.toLowerCase()}.tradias.link/api/clients/?skip=0&limit=1000&show_deleted=true`,
+      `https://${this.env.toLowerCase()}.tradias.link/api/clients/?skip=0&limit=1000`,
       {
         method: "GET",
         headers: headers,
@@ -91,7 +80,7 @@ class SpaceshipController {
       };
     }
 
-    return json_response;
+    return response;
   }
   async post_transaction(cash_mvt) {
     let response = await fetch(
@@ -104,13 +93,13 @@ class SpaceshipController {
         },
         body: JSON.stringify({
           value_date: parseInt(
-            new Date(cash_mvt["cash_mvt_date"]).getTime() / 1000
+            new Date(cash_mvt["compliance_received_at"]).getTime() / 1000
           ),
           sender_address_id: cash_mvt["source_address_id"],
           receiver_address_id: cash_mvt["destination_address_id"],
-          amount: parseFloat(cash_mvt["cash_mvt_amnt"]).toString(),
-          currency: cash_mvt["cash_mvt_curr_code"].toUpperCase(),
-          reference: cash_mvt["cash_mvt_reference"],
+          amount: cash_mvt["compliance_amount"],
+          currency: cash_mvt["currency_code"].toUpperCase(),
+          reference: "SepaDescription",
           reference_type: "ON_CHAIN_TRANSACTION_ID",
           type: "SETTLEMENT",
         }),

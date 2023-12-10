@@ -19,7 +19,7 @@ class CustodiansController {
   async dlt_request(from_date, to_date) {
     let nonce = nonce_lib.generate() * 10000;
     let page = 0;
-    let limit = 500;
+    let limit = 100000;
 
     let today = new Date(new Date().setHours(new Date().getHours() + 3))
       .toISOString()
