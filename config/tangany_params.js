@@ -31,6 +31,7 @@ class TanganyParams {
     this.eos_tradias_acc_name = env.EOS_TRADIAS_ACC_NAME;
     this.eth_tradias_address = env.ETH_TRADIAS_ADDRESS;
     this.sol_tradias_address = env.SOL_TRADIAS_ADDRESS;
+    this.atom_wallet = env.ATOM_TRADIAS_ADDRESS;
     this.eth_tradias_api_key = env.ETH_TRADIAS_API_KEY;
     this.polygon_tradias_api_key = env.POLYGON_ACCESS_KEY;
     this.ftm_tradias_api_key = env.FTM_ACCESS_KEY;
@@ -39,7 +40,6 @@ class TanganyParams {
   date_is_earlier_than_today(cash_mvt_block_time) {
     const blockTime = new Date(cash_mvt_block_time);
     const currentDate = new Date();
-
 
     // Extract day, month, and year components from blockTime
     const blockDay = blockTime.getDate();
@@ -91,7 +91,21 @@ class TanganyParams {
       consensusEndInEpoch: end_time_timestamp,
     };
   }
-  get_polygon_params(from,action) {
+  get_ftm_params(from, action) {
+    const offset = from + 100;
+    return this.ftm_tradias_wallet.split(",").map((address) => ({
+      module: "account",
+      action: action,
+      address: address.trim(), // Assuming addresses may have leading/trailing spaces
+      startblock: 0,
+      endblock: 99999999,
+      page: from !== 0 ? from : 1,
+      offset: offset,
+      sort: "desc",
+      apikey: this.ftm_tradias_api_key,
+    }));
+  }
+  get_polygon_params(from, action) {
     const offset = from + 100;
     return this.polygon_tradias_wallet.split(",").map((address) => ({
       module: "account",
@@ -110,6 +124,14 @@ class TanganyParams {
       account_name: this.eos_tradias_acc_name,
       pos: pos === null ? -1 : pos,
       offset: offset === null ? -100 : offset,
+    };
+  }
+  get_atom_params(page = null, offset = null) {
+    return {
+      address: this.atom_wallet,
+      chainShortName: "cosmos",
+      page,
+      limit:50
     };
   }
   get_sol_params(from_date = null) {

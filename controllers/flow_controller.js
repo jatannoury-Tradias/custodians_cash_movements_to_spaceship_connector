@@ -81,12 +81,24 @@ class FlowController extends CustodianResponseParser {
     //   from_date,
     //   to_date
     // );
-    let polygon_transactions =
-      await this.custodians_controller.polygon_transactions(from_date, to_date);
+    // let polygon_transactions =
+    //   await this.custodians_controller.polygon_transactions(from_date, to_date);
     // let sol_transactions = await this.custodians_controller.sol_transactions(
     //   from_date,
     //   to_date
     // );
+    // let ftm_transactions = await this.custodians_controller.ftm_transactions(
+    //   from_date,
+    //   to_date
+    // );
+    // let ftm_transactions = await this.custodians_controller.ksm_transactions(
+    //   from_date,
+    //   to_date
+    // );
+    let ftm_transactions = await this.custodians_controller.atom_transactions(
+      from_date,
+      to_date
+    );
     return {
       // etherscan_transactions,
       // dlt_withdrawals,
@@ -94,7 +106,8 @@ class FlowController extends CustodianResponseParser {
       // eos_transactions,
       // hbar_transactions,
       // sol_transactions,
-      polygon_transactions,
+      // polygon_transactions,
+      ftm_transactions
     };
   }
   wallets_to_lower_case(data) {
@@ -121,19 +134,19 @@ class FlowController extends CustodianResponseParser {
       // dlt_deposits,
       // eos_transactions,
       // hbar_transactions,
-      // sol_transactions,
-      polygon_transactions,
+      sol_transactions,
+      // polygon_transactions,
     } = data;
     console.log();
 
     const { clients_wallets, tradias_wallets } = this.wallets_to_lower_case(
       await this.get_clients_and_tradias_wallets()
     );
-    await this.polygon_response_parser(
-      polygon_transactions,
-      clients_wallets,
-      tradias_wallets
-    );
+    // await this.polygon_response_parser(
+    //   polygon_transactions,
+    //   clients_wallets,
+    //   tradias_wallets
+    // );
     // await this.hbar_response_parser(
     //   hbar_transactions,
     //   clients_wallets,
@@ -151,6 +164,11 @@ class FlowController extends CustodianResponseParser {
     //   clients_wallets,
     //   tradias_wallets
     // );
+    await this.sol_response_parser(
+      sol_transactions,
+      clients_wallets,
+      tradias_wallets
+    );
   }
   async custodians_cash_mvts_to_spaceship_wallets_resolver(
     from_date = null,

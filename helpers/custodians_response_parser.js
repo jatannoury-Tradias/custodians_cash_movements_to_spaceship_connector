@@ -71,8 +71,8 @@ class CustodianResponseParser extends CashMvtsMapper {
         let amount;
         let currency;
         if (action_cash_mvt === "tokentx") {
-          amount = element["value"] /( 10 ** element["tokenDecimal"]);
-          currency = element['tokenName'];
+          amount = element["value"] / 10 ** element["tokenDecimal"];
+          currency = element["tokenName"];
         } else {
           amount = element["value"] * 10 ** -18;
           currency = "MATIC";
@@ -229,6 +229,9 @@ class CustodianResponseParser extends CashMvtsMapper {
         });
       }
     });
+  }
+  async sol_response_parser(cash_mvts, clients_wallets, tradias_wallets) {
+    console.log()
   }
   async etherscan_response_parser(cash_mvts, clients_wallets, tradias_wallets) {
     cash_mvts.forEach((element) => {
