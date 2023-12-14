@@ -6,6 +6,7 @@ const POLYGON_URL = "https://api.polygonscan.com/api?";
 const FTM_URL = "https://api.ftmscan.com/api?";
 const KSM_URL = "https://kusama.api.subscan.io/api/v2/scan";
 const OKLINK_URL = "https://www.oklink.com/api";
+const NEAR_URL = "https://api.nearblocks.io/v1/account";
 module.exports = {
   ETHERSCAN_URL,
   EOS_URL,
@@ -15,4 +16,5 @@ module.exports = {
   FTM_URL,
   KSM_URL,
   OKLINK_URL,
+  NEAR_URL,
 };

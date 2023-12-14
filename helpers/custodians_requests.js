@@ -36,6 +36,8 @@ class CustodiansRequests extends TanganyController {
         return await this.ksm_instance.ksm_request(url, from_date, to_date);
       case "ATOM":
         return await this.oklink_instance.atom_request(url, from_date, to_date);
+      case "NEAR":
+        return await this.near_instance.near_request(url, from_date, to_date);
       default:
         throw Error(
           `${tangany_name} is not configured!! Please go to the CustodiansRequest class and modify the switch statement`

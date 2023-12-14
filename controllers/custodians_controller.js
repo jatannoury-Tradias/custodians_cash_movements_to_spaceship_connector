@@ -2,7 +2,7 @@ const ed = require("@noble/ed25519");
 // const fetch = require("node-fetch");
 let nonce_lib = require("nonce-next");
 const CustodiansInputsParser = require("../helpers/custodians_inputs_parsers");
-const { ETHERSCAN_URL, EOS_URL, HBAR_URL, SOL_URL, POLYGON_URL, FTM_URL, KSM_URL, OKLINK_URL } = require("../config/tangany_urls");
+const { ETHERSCAN_URL, EOS_URL, HBAR_URL, SOL_URL, POLYGON_URL, FTM_URL, KSM_URL, OKLINK_URL, NEAR_URL } = require("../config/tangany_urls");
 require("dotenv").config();
 
 class CustodiansController extends CustodiansInputsParser {
@@ -85,6 +85,14 @@ class CustodiansController extends CustodiansInputsParser {
       from_date,
       to_date,
       "ATOM"
+    );
+  }
+  async near_transactions(from_date = null, to_date = null) {
+    return await this.make_tangany_api_request(
+      NEAR_URL,
+      from_date,
+      to_date,
+      "NEAR"
     );
   }
 }

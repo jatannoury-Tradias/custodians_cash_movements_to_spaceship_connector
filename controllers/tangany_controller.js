@@ -3,6 +3,7 @@ const Etherscan = require("../custodians/ETHERSCAN");
 const FTM = require("../custodians/FTM");
 const HBAR = require("../custodians/HBAR");
 const KSM = require("../custodians/KSM");
+const NEAR = require("../custodians/NEAR");
 const OKLINK = require("../custodians/OKLINK");
 const POLYGON = require("../custodians/POLYGON");
 const SOL = require("../custodians/SOL");
@@ -18,6 +19,7 @@ class TanganyController  {
     this.ftm_instance = new FTM()
     this.ksm_instance = new KSM()
     this.oklink_instance = new OKLINK()
+    this.near_instance = new NEAR()
   }
   
 }

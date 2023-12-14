@@ -95,7 +95,11 @@ class FlowController extends CustodianResponseParser {
     //   from_date,
     //   to_date
     // );
-    let ftm_transactions = await this.custodians_controller.atom_transactions(
+    // let atom_transactions = await this.custodians_controller.atom_transactions(
+    //   from_date,
+    //   to_date
+    // );
+    let near_transactions = await this.custodians_controller.near_transactions(
       from_date,
       to_date
     );
@@ -107,7 +111,8 @@ class FlowController extends CustodianResponseParser {
       // hbar_transactions,
       // sol_transactions,
       // polygon_transactions,
-      ftm_transactions
+      // ftm_transactions,
+      // atom_transactions,
     };
   }
   wallets_to_lower_case(data) {
