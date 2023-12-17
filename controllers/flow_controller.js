@@ -99,10 +99,23 @@ class FlowController extends CustodianResponseParser {
     //   from_date,
     //   to_date
     // );
-    let near_transactions = await this.custodians_controller.near_transactions(
+    // let near_transactions = await this.custodians_controller.near_transactions(
+    //   from_date,
+    //   to_date
+    // );
+    // let oklink_transactions =
+    //   await this.custodians_controller.oklink_transactions(from_date, to_date);
+    // let celo_transactions =
+    //   await this.custodians_controller.celo_transactions(from_date, to_date);
+    // let sgb_transactions = await this.custodians_controller.sgb_transactions(
+    //   from_date,
+    //   to_date
+    // );
+    let xtz_transactions = await this.custodians_controller.xtz_transactions(
       from_date,
       to_date
     );
+
     return {
       // etherscan_transactions,
       // dlt_withdrawals,
@@ -113,6 +126,8 @@ class FlowController extends CustodianResponseParser {
       // polygon_transactions,
       // ftm_transactions,
       // atom_transactions,
+      // celo_transactions,
+      sgb_transactions,
     };
   }
   wallets_to_lower_case(data) {
@@ -192,4 +207,4 @@ class FlowController extends CustodianResponseParser {
     });
   }
 }
-   module.exports = FlowController;
+module.exports = FlowController;

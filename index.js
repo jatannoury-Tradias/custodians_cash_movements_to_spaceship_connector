@@ -10,7 +10,7 @@ async function main() {
     await flow_controller.custodians_cash_mvts_to_spaceship_wallets_resolver(from_date,to_date);
     await flow_controller.push_transactions(flow_controller.cash_mvts);
   } catch (e) {
-    console.log(e);
+      console.log(e);
   }
 }
 

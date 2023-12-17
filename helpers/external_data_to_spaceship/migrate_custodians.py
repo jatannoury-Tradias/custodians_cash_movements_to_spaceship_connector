@@ -246,3 +246,46 @@ if __name__ == "__main__":
     # #
     # # pass
     #
+test = {
+  "type": "stream_predefined",
+  "source": "fromRequest",
+  "channel": "global_streaming",
+  "number_of_runs": 1000,
+  "payload": {
+    "data": [
+      {
+        "input": [
+          {
+            "event": "prices",
+            "success": true,
+            "instrument": "BTC-USD",
+            "levels": {
+              "buy": [
+                { "price": "32584.25", "quantity": "0.3906" },
+                { "price": "32590.76", "quantity": "1.5625" },
+                { "price": "32600.52", "quantity": "3.125" },
+                { "price": "32616.80", "quantity": "6.25" },
+                { "price": "32649.35", "quantity": "12.5" },
+                { "price": "32669.35", "quantity": "25" },
+                { "price": "32689.35", "quantity": "50" },
+                { "price": "32699.35", "quantity": "100" }
+              ],
+              "sell": [
+                { "price": "32519.14", "quantity": "0.3906" },
+                { "price": "32512.63", "quantity": "1.5625" },
+                { "price": "32502.87", "quantity": "3.125" },
+                { "price": "32486.59", "quantity": "6.25" },
+                { "price": "32454.04", "quantity": "12.5" },
+                { "price": "32444.04", "quantity": "25" },
+                { "price": "32434.04", "quantity": "50" },
+                { "price": "32424.04", "quantity": "100" }
+              ]
+            },
+            "timestamp": "2023-10-26T13:47:04.893303Z"
+          }
+        ],
+        "time_interval": 1,
+      }
+    ]
+  }
+}

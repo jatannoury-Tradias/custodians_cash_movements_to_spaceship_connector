@@ -2,7 +2,20 @@ const ed = require("@noble/ed25519");
 // const fetch = require("node-fetch");
 let nonce_lib = require("nonce-next");
 const CustodiansInputsParser = require("../helpers/custodians_inputs_parsers");
-const { ETHERSCAN_URL, EOS_URL, HBAR_URL, SOL_URL, POLYGON_URL, FTM_URL, KSM_URL, OKLINK_URL, NEAR_URL } = require("../config/tangany_urls");
+const {
+  ETHERSCAN_URL,
+  EOS_URL,
+  HBAR_URL,
+  SOL_URL,
+  POLYGON_URL,
+  FTM_URL,
+  KSM_URL,
+  OKLINK_URL,
+  NEAR_URL,
+  CELO_URL,
+  SGB_URL,
+  XTZ_URL,
+} = require("../config/tangany_urls");
 require("dotenv").config();
 
 class CustodiansController extends CustodiansInputsParser {
@@ -87,12 +100,44 @@ class CustodiansController extends CustodiansInputsParser {
       "ATOM"
     );
   }
+  async oklink_transactions(from_date = null, to_date = null) {
+    return await this.make_tangany_api_request(
+      OKLINK_URL,
+      from_date,
+      to_date,
+      "OKLINK"
+    );
+  }
+  async celo_transactions(from_date = null, to_date = null) {
+    return await this.make_tangany_api_request(
+      CELO_URL,
+      from_date,
+      to_date,
+      "CELO"
+    );
+  }
   async near_transactions(from_date = null, to_date = null) {
     return await this.make_tangany_api_request(
       NEAR_URL,
       from_date,
       to_date,
       "NEAR"
+    );
+  }
+  async sgb_transactions(from_date = null, to_date = null) {
+    return await this.make_tangany_api_request(
+      SGB_URL,
+      from_date,
+      to_date,
+      "SGB"
+    );
+  }
+  async xtz_transactions(from_date = null, to_date = null) {
+    return await this.make_tangany_api_request(
+      XTZ_URL,
+      from_date,
+      to_date,
+      "XTZ"
     );
   }
 }

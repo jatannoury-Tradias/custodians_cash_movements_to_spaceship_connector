@@ -12,24 +12,12 @@ class CustodiansRequests extends TanganyController {
     tangany_name
   ) {
     switch (tangany_name) {
-      case "ETH":
-        return await this.etherscan_instance.eth_request(
-          url,
-          from_date,
-          to_date
-        );
       case "EOS":
         return await this.eos_instance.eos_request(url, from_date, to_date);
       case "HBAR":
         return await this.hbar_instance.hbar_request(url, from_date, to_date);
       case "SOL":
         return await this.sol_instance.sol_request(url, from_date, to_date);
-      case "POLYGON":
-        return await this.polygon_instance.polygon_request(
-          url,
-          from_date,
-          to_date
-        );
       case "FTM":
         return await this.ftm_instance.ftm_request(url, from_date, to_date);
       case "KSM":
@@ -38,6 +26,30 @@ class CustodiansRequests extends TanganyController {
         return await this.oklink_instance.atom_request(url, from_date, to_date);
       case "NEAR":
         return await this.near_instance.near_request(url, from_date, to_date);
+      case "SGB":
+        return await this.sgb_instance.sgb_request(url, from_date, to_date);
+      case "XTZ":
+        return await this.xtz_instance.xtz_request(url, from_date, to_date);
+      case "OKLINK":
+        return await this.oklink_instance.oklink_request(
+          url,
+          from_date,
+          to_date
+        );
+      case "CELO":
+        return await this.celo_instance.celo_request(url, from_date, to_date);
+      case "ETH":
+        return await this.etherscan_instance.eth_request(
+          url,
+          from_date,
+          to_date
+        );
+      case "POLYGON":
+        return await this.polygon_instance.polygon_request(
+          url,
+          from_date,
+          to_date
+        );
       default:
         throw Error(
           `${tangany_name} is not configured!! Please go to the CustodiansRequest class and modify the switch statement`

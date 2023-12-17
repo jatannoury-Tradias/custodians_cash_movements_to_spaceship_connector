@@ -31,16 +31,37 @@ class TanganyParams {
     this.eos_tradias_acc_name = env.EOS_TRADIAS_ACC_NAME;
     this.eth_tradias_address = env.ETH_TRADIAS_ADDRESS;
     this.sol_tradias_address = env.SOL_TRADIAS_ADDRESS;
+    this.celo_tradias_address = env.CELO_TRADIAS_ADDRESS;
+    this.sgb_tradias_address = env.SGB_TRADIAS_ADDRESS;
     this.atom_wallet = env.ATOM_TRADIAS_ADDRESS;
+    this.xtz_tradias_wallet = env.XTZ_TRADIAS_ADDRESS;
+
     this.eth_tradias_api_key = env.ETH_TRADIAS_API_KEY;
     this.polygon_tradias_api_key = env.POLYGON_ACCESS_KEY;
+    this.celo_tradias_api_key = env.CELO_TRADIAS_API_KEY;
     this.ftm_tradias_api_key = env.FTM_ACCESS_KEY;
     this.ksm_tradias_api_key = env.KSM_ACCESS_KEY;
+    this.sgb_tradias_api_key = env.SGB_ACCESS_KEY;
   }
   date_is_earlier_than_today(cash_mvt_block_time) {
-    const blockTime = new Date(cash_mvt_block_time);
-    const currentDate = new Date();
+    // Create a new Date object in UTC using the values from the original date
+    let originalDate = new Date(cash_mvt_block_time);
 
+    // Adjust for the local time zone offset
+    let localOffset = originalDate.getTimezoneOffset();
+    let blockTime = new Date(originalDate.getTime() + localOffset * 60 * 1000);
+    let currentDate = new Date();
+    currentDate = new Date(
+      Date.UTC(
+        currentDate.getUTCFullYear(),
+        currentDate.getUTCMonth(),
+        currentDate.getUTCDate(),
+        currentDate.getUTCHours(),
+        currentDate.getUTCMinutes(),
+        currentDate.getUTCSeconds(),
+        currentDate.getUTCMilliseconds()
+      )
+    );
     // Extract day, month, and year components from blockTime
     const blockDay = blockTime.getDate();
     const blockMonth = blockTime.getMonth();
@@ -91,6 +112,13 @@ class TanganyParams {
       consensusEndInEpoch: end_time_timestamp,
     };
   }
+  get_sgb_params(page) {
+    return {
+      "page-number": page,
+      "page-size": 10000,
+      key: this.sgb_tradias_api_key,
+    };
+  }
   get_ftm_params(from, action) {
     const offset = from + 100;
     return this.ftm_tradias_wallet.split(",").map((address) => ({
@@ -119,6 +147,29 @@ class TanganyParams {
       apikey: this.polygon_tradias_api_key,
     }));
   }
+  get_celo_params(action) {
+    return {
+      module: "account",
+      action: action,
+      address: this.celo_tradias_address.trim(), // Assuming addresses may have leading/trailing spaces
+      startblock: 0,
+      endblock: 99999999,
+      page: 0,
+      offset: 10000,
+      sort: "desc",
+      apikey: this.celo_tradias_api_key,
+    };
+  }
+  get_xtz_params(lastId = null) {
+    let params = {
+      limit: 1000,
+      type: "transaction",
+    };
+    if (lastId) {
+      params["lastId"] = lastId;
+    }
+    return params;
+  }
   get_eos_params(pos = null, offset = null) {
     return {
       account_name: this.eos_tradias_acc_name,
@@ -131,7 +182,32 @@ class TanganyParams {
       address: this.atom_wallet,
       chainShortName: "cosmos",
       page,
-      limit:50
+      limit: 50,
+    };
+  }
+  get_oklink_params(currency, address_mapping) {
+    let chainShortName = currency.toLowerCase();
+    const normal_curr_lookup = address_mapping[currency.toUpperCase()];
+    const special_curr_lookup = address_mapping[currency.toUpperCase()];
+    let address =
+      normal_curr_lookup !== undefined
+        ? normal_curr_lookup
+        : special_curr_lookup;
+    let symbol = currency.toUpperCase();
+    if (currency === "AVAX-C") {
+      chainShortName = "avaxc";
+      address = address_mapping["AVAX"];
+      symbol = "AVAXC";
+    } else if (currency === "ARB") {
+      chainShortName = "arbitrum";
+      address = address_mapping["ARB"];
+    } else if (address === undefined) {
+      throw new Error(`ADDRESS OF ${currency} NOT FOUND IN ENV FILE`);
+    }
+    return {
+      chainShortName,
+      address,
+      symbol,
     };
   }
   get_sol_params(from_date = null) {
