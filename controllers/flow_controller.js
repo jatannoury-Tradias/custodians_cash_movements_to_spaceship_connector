@@ -1,12 +1,15 @@
 const CustodianResponseParser = require("../helpers/custodians_response_parser");
 const CustodiansController = require("./custodians_controller");
+const FiatConnectionsController = require("./fiat_connections_controller");
 const SpaceshipController = require("./spaceship_controller");
-
+const custodian_data = require("../data/test_data/custodians_data");
+const { client_deposit } = require("../utils/client_deposit");
 class FlowController extends CustodianResponseParser {
   constructor() {
     super();
     this.spaceship_controller = new SpaceshipController();
     this.custodians_controller = new CustodiansController();
+    this.fiat_connection_controller = new FiatConnectionsController();
     this.customer_id_to_custodian_cash_mvts_mapper = {};
     this.wallets_with_no_spaceship_mapping = [];
     this.tradias_wallets = null;
@@ -19,6 +22,9 @@ class FlowController extends CustodianResponseParser {
         tradias_wallets: this.tradias_wallets,
       };
     }
+    if(this.spaceship_controller.clients_addresses === null){
+      await this.spaceship_controller.get_clients_addresses()
+    }
     let spaceship_clients = await this.spaceship_controller.get_clients();
     let spaceship_deleted_clients =
       await this.spaceship_controller.get_deleted_clients();
@@ -27,16 +33,11 @@ class FlowController extends CustodianResponseParser {
     let owner_id_to_name_map = [
       ...spaceship_deleted_clients["items"],
       ...spaceship_clients["items"],
-    ];
-
-    owner_id_to_name_map = owner_id_to_name_map.reduce(
-      (result, client_object) => {
-        let client_id = client_object["id"];
-        result[client_id] = client_object["name"];
-        return result;
-      },
-      {}
-    );
+    ].reduce((result, client_object) => {
+      let client_id = client_object["id"];
+      result[client_id] = client_object["name"];
+      return result;
+    }, {});
 
     let tradias_wallets = Object.values(
       this.spaceship_controller.clients_addresses
@@ -62,72 +63,96 @@ class FlowController extends CustodianResponseParser {
       }, {});
     return { clients_wallets, tradias_wallets };
   }
-  async collect_data(from_date, to_date) {
-    // let etherscan_transactions =
-    //   await this.custodians_controller.eth_transactions(from_date, to_date);
-    // let dlt_deposits = await this.custodians_controller.dlt_deposits(
+  async collect_fiat_data(from_date, to_date) {
+    let bcb = await this.fiat_connection_controller.bcb_transactions(
+      from_date,
+      to_date
+    );
+    return {
+      bcb_transactions,
+    };
+  }
+  async collect_currencies_data(from_date, to_date) {
+    let oklink = await this.custodians_controller.oklink_transactions(
+      from_date,
+      to_date
+    );
+    oklink = {
+      ...oklink,
+      ATOM: atom,
+    };
+    let celo = await this.custodians_controller.celo_transactions(
+      from_date,
+      to_date
+    );
+    let xtz = await this.custodians_controller.xtz_transactions(
+      from_date,
+      to_date
+    );
+    let etherscan = await this.custodians_controller.eth_transactions(
+      from_date,
+      to_date
+    );
+
+    let dlt_deposits = await this.custodians_controller.dlt_deposits(
+      from_date,
+      to_date
+    );
+    let dlt_withdrawals = await this.custodians_controller.dlt_withdrawals(
+      from_date,
+      to_date
+    );
+    let dltcustody = {
+      deposits: dlt_deposits,
+      withdrawals: dlt_withdrawals,
+    };
+    let eos = await this.custodians_controller.eos_transactions(
+      from_date,
+      to_date
+    );
+    // let hbar= await this.custodians_controller.hbar_transactions(
     //   from_date,
     //   to_date
     // );
-    // let dlt_withdrawals = await this.custodians_controller.dlt_withdrawals(
-    //   from_date,
-    //   to_date
-    // );
-    // let eos_transactions = await this.custodians_controller.eos_transactions(
-    //   from_date,
-    //   to_date
-    // );
-    // let hbar_transactions = await this.custodians_controller.hbar_transactions(
-    //   from_date,
-    //   to_date
-    // );
-    // let polygon_transactions =
-    //   await this.custodians_controller.polygon_transactions(from_date, to_date);
-    // let sol_transactions = await this.custodians_controller.sol_transactions(
-    //   from_date,
-    //   to_date
-    // );
-    // let ftm_transactions = await this.custodians_controller.ftm_transactions(
-    //   from_date,
-    //   to_date
-    // );
-    // let ftm_transactions = await this.custodians_controller.ksm_transactions(
-    //   from_date,
-    //   to_date
-    // );
-    // let atom_transactions = await this.custodians_controller.atom_transactions(
-    //   from_date,
-    //   to_date
-    // );
-    // let near_transactions = await this.custodians_controller.near_transactions(
-    //   from_date,
-    //   to_date
-    // );
-    // let oklink_transactions =
-    //   await this.custodians_controller.oklink_transactions(from_date, to_date);
-    // let celo_transactions =
-    //   await this.custodians_controller.celo_transactions(from_date, to_date);
-    // let sgb_transactions = await this.custodians_controller.sgb_transactions(
-    //   from_date,
-    //   to_date
-    // );
-    let xtz_transactions = await this.custodians_controller.xtz_transactions(
+    let polygon = await this.custodians_controller.polygon_transactions(
+      from_date,
+      to_date
+    );
+    let sol = await this.custodians_controller.sol_transactions(
+      from_date,
+      to_date
+    );
+    let ftm = await this.custodians_controller.ftm_transactions(
+      from_date,
+      to_date
+    );
+    let atom = await this.custodians_controller.atom_transactions(
+      from_date,
+      to_date
+    );
+    let near = await this.custodians_controller.near_transactions(
+      from_date,
+      to_date
+    );
+
+    let sgb = await this.custodians_controller.sgb_transactions(
       from_date,
       to_date
     );
 
     return {
-      // etherscan_transactions,
-      // dlt_withdrawals,
-      // dlt_deposits,
-      // eos_transactions,
-      // hbar_transactions,
-      // sol_transactions,
-      // polygon_transactions,
-      // ftm_transactions,
-      // atom_transactions,
-      // celo_transactions,
-      sgb_transactions,
+      etherscan,
+      dltcustody,
+      eos,
+      // hbar,
+      polygon,
+      sol,
+      ftm,
+      near,
+      oklink,
+      celo,
+      sgb,
+      xtz,
     };
   }
   wallets_to_lower_case(data) {
@@ -147,58 +172,74 @@ class FlowController extends CustodianResponseParser {
       tradias_wallets,
     };
   }
-  async parse_data(data, clients_addresses) {
-    const {
-      // etherscan_transactions,
-      // dlt_withdrawals,
-      // dlt_deposits,
-      // eos_transactions,
-      // hbar_transactions,
-      sol_transactions,
-      // polygon_transactions,
-    } = data;
-    console.log();
-
-    const { clients_wallets, tradias_wallets } = this.wallets_to_lower_case(
-      await this.get_clients_and_tradias_wallets()
-    );
-    // await this.polygon_response_parser(
-    //   polygon_transactions,
-    //   clients_wallets,
-    //   tradias_wallets
-    // );
-    // await this.hbar_response_parser(
-    //   hbar_transactions,
-    //   clients_wallets,
-    //   tradias_wallets
-    // );
-    // await this.eos_response_parser(
-    //   eos_transactions,
-    //   clients_wallets,
-    //   tradias_wallets
-    // );
-    // const { clients_id_to_withdrawal_mapping, clients_id_to_deposit_mapping } =
-    //   await this.dlt_response_parser(dlt_deposits, dlt_withdrawals);
-    // await this.etherscan_response_parser(
-    //   etherscan_transactions,
-    //   clients_wallets,
-    //   tradias_wallets
-    // );
-    await this.sol_response_parser(
-      sol_transactions,
-      clients_wallets,
-      tradias_wallets
-    );
+  async parse_cash_mvt_type(data, config) {
+    return data.map((cash_mvt) => {
+      let mapped_data = {};
+      for (const [config_key, config_value] of Object.entries(config)) {
+        if (
+          ["custodian", "transaction_key"].includes(config_key.toLowerCase())
+        ) {
+          continue;
+        }
+        if (config_key.toLowerCase() === "status_filter") {
+          if (this.parse_status_filter(config_value, cash_mvt) === false) {
+            return {};
+          } else {
+            continue;
+          }
+        }
+        mapped_data[config_key] = this.parse_config_value(
+          config_value,
+          config_key.toLowerCase(),
+          cash_mvt,
+          mapped_data
+        );
+      }
+      return mapped_data;
+    });
   }
-  async custodians_cash_mvts_to_spaceship_wallets_resolver(
+  async parse_data(data) {
+    let configs = this.parse_csv_config();
+    data = data;
+    for (const config of configs) {
+      let custodian = config.Custodian?.replace("Tangany_", "").toLowerCase();
+      // if (!custodian.includes("polygon")) {
+      //   continue;
+      // }
+      let cash_mvt_type = config.Transaction_key.toLowerCase();
+      if (Array.isArray(data[custodian])) {
+        let custodian_data = data[custodian];
+        data[custodian] = { txlist: custodian_data };
+      }
+      if (custodian.trim() === "" || cash_mvt_type.trim() === "") {
+        continue;
+      }
+      if (!custodian.includes("oklink")) {
+        data[custodian][cash_mvt_type] = await this.parse_cash_mvt_type(
+          data[custodian][cash_mvt_type],
+          config
+        );
+      } else {
+        custodian = custodian.replace("oklink_", "");
+        data["oklink"][custodian][cash_mvt_type] =
+          await this.parse_cash_mvt_type(
+            data["oklink"][custodian][cash_mvt_type],
+            config
+          );
+      }
+    }
+    let layer_2_filter = await client_deposit(data, this);
+  }
+
+  async fiat_connections_to_spaceship_wallets_resolver(
     from_date = null,
     to_date = null
   ) {
     let clients_addresses =
       await this.spaceship_controller.get_clients_addresses(false);
-    let collected_data = await this.collect_data(from_date, to_date);
-    await this.parse_data(collected_data, clients_addresses);
+    let collected_fiat_data = await this.collect_fiat_data(from_date, to_date);
   }
+
   async push_transactions(flow_controller_instance) {
     Object.keys(flow_controller_instance).forEach(async (element) => {
       await flow_controller_instance[element].forEach(async (cash_mvt) => {
@@ -208,3 +249,7 @@ class FlowController extends CustodianResponseParser {
   }
 }
 module.exports = FlowController;
+if (require.main === module) {
+  let flow_controller_instance = new FlowController();
+  flow_controller_instance.parse_data(custodian_data);
+}

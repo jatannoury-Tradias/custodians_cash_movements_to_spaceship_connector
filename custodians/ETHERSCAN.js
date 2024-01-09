@@ -23,20 +23,20 @@ class Etherscan extends TanganyParams{
     let erc_request = await this.do_eth_request(url, ETH_ERCTOKEN_queryParams);
     let int_request = await this.do_eth_request(url, ETH_INTERNAL_queryParams);
     let normal_request = await this.do_eth_request(url, ETH_NORMAL_queryParams);
-    return [
-      ...erc_request["result"].map((element) => {
+    return {
+      tokentx:[...erc_request["result"].map((element) => {
         element["request_type"] = "ERC20";
         return element;
-      }),
-      ...int_request["result"].map((element) => {
+      })],
+      internal:[...int_request["result"].map((element) => {
         element["request_type"] = "INTERNAL";
         return element;
-      }),
-      ...normal_request["result"].map((element) => {
+      })],
+      txlist:[...normal_request["result"].map((element) => {
         element["request_type"] = "NORMAL";
         return element;
-      }),
-    ];
+      })],
+    };
   }
 }
 module.exports = Etherscan

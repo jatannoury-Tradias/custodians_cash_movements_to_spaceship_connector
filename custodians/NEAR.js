@@ -41,8 +41,7 @@ class NEAR extends TanganyParams {
       all_res = [...res, ...all_res];
     }
 
-    console.log("first");
+    return all_res;
   }
 }
 module.exports = NEAR;
-

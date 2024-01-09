@@ -30,14 +30,14 @@ class CustodiansRequests extends TanganyController {
         return await this.sgb_instance.sgb_request(url, from_date, to_date);
       case "XTZ":
         return await this.xtz_instance.xtz_request(url, from_date, to_date);
+      case "CELO":
+        return await this.celo_instance.celo_request(url, from_date, to_date);
       case "OKLINK":
         return await this.oklink_instance.oklink_request(
           url,
           from_date,
           to_date
         );
-      case "CELO":
-        return await this.celo_instance.celo_request(url, from_date, to_date);
       case "ETH":
         return await this.etherscan_instance.eth_request(
           url,

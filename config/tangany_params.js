@@ -46,7 +46,9 @@ class TanganyParams {
   date_is_earlier_than_today(cash_mvt_block_time) {
     // Create a new Date object in UTC using the values from the original date
     let originalDate = new Date(cash_mvt_block_time);
-
+    if (!cash_mvt_block_time) {
+      return true;
+    }
     // Adjust for the local time zone offset
     let localOffset = originalDate.getTimezoneOffset();
     let blockTime = new Date(originalDate.getTime() + localOffset * 60 * 1000);
@@ -133,16 +135,15 @@ class TanganyParams {
       apikey: this.ftm_tradias_api_key,
     }));
   }
-  get_polygon_params(from, action) {
-    const offset = from + 100;
+  get_polygon_params(page, action) {
     return this.polygon_tradias_wallet.split(",").map((address) => ({
       module: "account",
       action: action,
       address: address.trim(), // Assuming addresses may have leading/trailing spaces
       startblock: 0,
-      endblock: 99999999,
-      page: from !== 0 ? from : 1,
-      offset: offset,
+      endblock: 999999999999,
+      page: page !== 0 ? page : 1,
+      offset: 500,
       sort: "desc",
       apikey: this.polygon_tradias_api_key,
     }));
@@ -241,13 +242,18 @@ class TanganyParams {
       apikey: this.eth_tradias_api_key,
     };
     let current_date =
-      from_date === null ? new Date().getDate() - 1 : from_date;
+      from_date === null
+        ? new Date().getDate() - 1
+        : new Date(from_date).getDate();
     let start_date_timestamp = new Date(
       new Date(new Date().setDate(current_date)).setHours(0, 0, 0, 0)
     ).getTime();
-    let end_time_timestamp = new Date(
-      new Date(new Date().setDate(current_date + 1)).setHours(0, 0, 0, 0)
-    ).getTime();
+    let end_time_timestamp =
+      to_date === null
+        ? new Date(
+            new Date(new Date().setDate(current_date + 1)).setHours(0, 0, 0, 0)
+          ).getTime()
+        : new Date(new Date(to_date).setHours(0, 0, 0, 0)).getTime();
     let BLOCK_NB_START_queryParam = {
       module: "block",
       action: "getblocknobytime",

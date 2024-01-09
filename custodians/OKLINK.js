@@ -35,19 +35,25 @@ class OKLINK extends TanganyParams {
   }
   async atom_request(url, from_date = null, to_date = null) {
     url = `${url}/v5/explorer/address/normal-transaction-cosmos?`;
+    let page = 0;
     let atom_res = await this.do_oklink_request(
       "GET",
       url,
       this.get_atom_params(page)
     );
-    let all_atom_res = [...(atom_res?.data?.transactionLists || [])];
+    let all_atom_res = [
+      ...(atom_res?.data?.transactionLists ||
+        atom_res?.data?.transactionList ||
+        []),
+    ];
     // Pagination
     while (atom_res["data"]["page"] !== atom_res["data"]["totalPage"]) {
+      page = parseInt(atom_res["data"]["page"]) + 1;
       atom_res = await this.do_oklink_request(
         "GET",
         url,
         this.get_atom_params(page),
-        parseInt(atom_res["data"]["page"]) + 1
+        page
       );
       all_atom_res = [
         ...(atom_res?.data?.transactionLists || []),
@@ -63,7 +69,11 @@ class OKLINK extends TanganyParams {
       txs_url,
       oklink_params
     );
-    let all_cash_mvts = [];
+    let all_cash_mvts = [
+      ...(txs_request.data[0]?.transactionList ||
+        txs_request.data[0]?.transactionLists ||
+        []),
+    ];
     let oldest_cash_mvt;
     while (txs_request.data[0]?.totalPage !== txs_request.data[0]?.page) {
       all_cash_mvts = [
@@ -113,29 +123,34 @@ class OKLINK extends TanganyParams {
       this.get_oklink_variables(url);
     for (const currency_type of Object.keys(this.address_mapping)) {
       for (const currency of Object.keys(this.address_mapping[currency_type])) {
+        console.log(currency);
+        if (currency.toLowerCase() !== "doge"){
+          continue
+        }
         const oklink_params = this.get_oklink_params(
           currency,
           this.address_mapping[currency_type]
         );
-        const normal_txs_data = await this.paginate_oklink(
-          txs_url,
-          oklink_params
-        );
         let token_txs_data = [];
         if (currency_type !== "special") {
-          let token_txs_data = await this.paginate_oklink(
+          token_txs_data = await this.paginate_oklink(
             token_txs_url,
             oklink_params
           );
         }
-        oklink_data[currency.toUpperCase()] = {
-          normal_txs_data,
-          token_txs_data,
+        const normal_txs_data = await this.paginate_oklink(
+          txs_url,
+          oklink_params
+        );
+
+        oklink_data[currency.toLowerCase()] = {
+          txlist: normal_txs_data,
+          tokentx: token_txs_data,
         };
       }
     }
-    
-    return oklink_data
+
+    return oklink_data;
   }
 }
 module.exports = OKLINK;

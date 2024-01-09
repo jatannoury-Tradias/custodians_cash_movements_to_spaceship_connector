@@ -5,7 +5,7 @@ class EOS extends TanganyParams {
   constructor() {
     super();
   }
-  
+
   async do_eos_request(url, from_date = null, to_date = null, position = null) {
     let params = this.get_eos_params();
     const request_url = this.json_to_query_params(url, {
@@ -33,7 +33,7 @@ class EOS extends TanganyParams {
     eos_res = eos_res.filter(
       (element) => !this.date_is_earlier_than_today(element["block_time"])
     );
-    return eos_res;
+    return { txlist: eos_res };
   }
 }
 module.exports = EOS;

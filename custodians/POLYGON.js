@@ -9,9 +9,9 @@ class POLYGON extends TanganyParams {
     const env = process.env;
     this.polygon_access_key = this.polygon_access_key;
   }
-  async do_polygon_request(url, from = 0) {
-    let txlist_params = this.get_polygon_params(from, "txlist");
-    let tokentx_params = this.get_polygon_params(from, "tokentx");
+  async do_polygon_request(url, page = 0) {
+    let txlist_params = this.get_polygon_params(page, "txlist");
+    let tokentx_params = this.get_polygon_params(page, "tokentx");
     let all_res = {};
     for (const param of [...tokentx_params, ...txlist_params]) {
       console.log(param);
@@ -33,41 +33,56 @@ class POLYGON extends TanganyParams {
       } else {
         all_res[param["action"]] = [...(res?.result || [])];
       }
-      if (res.result.length === 0) {
+      if (!res.result?.length) {
         continue;
-      }
-      while (
-        !this.date_is_earlier_than_today(
-          new Date(
-            parseInt(
-              all_res[param["action"]][all_res[param["action"]].length - 1]
-                ?.timeStamp
-            ) * 1000
-          )
-        )
-      ) {
-        let from = all_res[param["action"]].length;
-        let polygon_res = await this.do_polygon_request(url, param, from);
-        all_res[param["action"]] = polygon_res?.result
-          ? [...polygon_res, ...all_res[param["action"]]]
-          : all_res[param["action"]];
       }
     }
 
     return all_res;
   }
   async polygon_request(url, from_date, to_date) {
-    let polygon_res = await this.do_polygon_request(url);
-    polygon_res = Object.keys(polygon_res).map((action) => {
-      return polygon_res[action].filter(
+    let all_res = await this.do_polygon_request(url);
+    let oldest_txlist_mvt =
+      parseInt(all_res["txlist"][all_res["txlist"].length - 1]?.timeStamp) *
+      1000;
+
+    let oldest_tokentx_mvt =
+      parseInt(all_res["tokentx"][all_res["tokentx"].length - 1]?.timeStamp) *
+      1000;
+    let request_counter = 1;
+    while (
+      !this.date_is_earlier_than_today(oldest_txlist_mvt) ||
+      !this.date_is_earlier_than_today(oldest_tokentx_mvt)
+    ) {
+      request_counter += 1;
+      let polygon_res = await this.do_polygon_request(url, request_counter);
+      all_res["tokentx"] = [...all_res["tokentx"], ...polygon_res["tokentx"]];
+
+      all_res["txlist"] = [...all_res["txlist"], ...polygon_res["txlist"]];
+
+      oldest_txlist_mvt =
+        parseInt(
+          polygon_res["txlist"][polygon_res["txlist"].length - 1]?.timeStamp
+        ) * 1000;
+      if (isNaN(oldest_txlist_mvt) && isNaN(oldest_tokentx_mvt)) {
+        break;
+      }
+      oldest_tokentx_mvt =
+        parseInt(
+          polygon_res["tokentx"][polygon_res["tokentx"].length - 1]?.timeStamp
+        ) * 1000;
+    }
+    let data_to_return = {};
+    Object.keys(all_res).map((action) => {
+      return (data_to_return[action] = all_res[action].filter(
         (element) =>
           !this.date_is_earlier_than_today(
             new Date(parseInt(element["timeStamp"]) * 1000)
           )
-      );
+      ));
     });
 
-    return polygon_res;
+    return data_to_return;
   }
 }
 module.exports = POLYGON;

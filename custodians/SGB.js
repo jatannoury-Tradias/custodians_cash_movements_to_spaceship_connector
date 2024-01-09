@@ -30,9 +30,12 @@ class SGB extends TanganyParams {
       const res = await this.do_sgb_request(request_url);
       all_res = [...all_res, ...res.data.items];
     }
-    return all_res.filter(
-      (element) => !this.date_is_earlier_than_today(element["block_signed_at"])
-    );
+    return {
+      txlist: all_res.filter(
+        (element) =>
+          !this.date_is_earlier_than_today(element["block_signed_at"])
+      ),
+    };
   }
 }
 module.exports = SGB;
