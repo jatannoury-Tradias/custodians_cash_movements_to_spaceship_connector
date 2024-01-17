@@ -1,16 +1,17 @@
 const TanganyParams = require("../config/tangany_params");
+const { response_parser } = require("../utils/response_parser");
 const sleep = require("../utils/sleep");
 
-class Etherscan extends TanganyParams{
+class Etherscan extends TanganyParams {
   constructor() {
-    super()
+    super();
   }
   async do_eth_request(url, params) {
     Object.keys(params).forEach((key) => {
       url += `${key}=${params[key]}&`;
     });
-    return await fetch(url).then((res) => {
-      return res.json();
+    return await fetch(url).then(async (res) => {
+      return await response_parser(res, 200, "Etherscan");
     });
   }
   async eth_request(url, from_date = null, to_date = null) {
@@ -24,19 +25,25 @@ class Etherscan extends TanganyParams{
     let int_request = await this.do_eth_request(url, ETH_INTERNAL_queryParams);
     let normal_request = await this.do_eth_request(url, ETH_NORMAL_queryParams);
     return {
-      tokentx:[...erc_request["result"].map((element) => {
-        element["request_type"] = "ERC20";
-        return element;
-      })],
-      internal:[...int_request["result"].map((element) => {
-        element["request_type"] = "INTERNAL";
-        return element;
-      })],
-      txlist:[...normal_request["result"].map((element) => {
-        element["request_type"] = "NORMAL";
-        return element;
-      })],
+      tokentx: [
+        ...erc_request?.["result"].map((element) => {
+          element["request_type"] = "ERC20";
+          return element;
+        }),
+      ],
+      internal: [
+        ...int_request?.["result"].map((element) => {
+          element["request_type"] = "INTERNAL";
+          return element;
+        }),
+      ],
+      txlist: [
+        ...normal_request?.["result"].map((element) => {
+          element["request_type"] = "NORMAL";
+          return element;
+        }),
+      ],
     };
   }
 }
-module.exports = Etherscan
+module.exports = Etherscan;

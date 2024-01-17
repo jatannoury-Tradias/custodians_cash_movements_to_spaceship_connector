@@ -1,4 +1,5 @@
 const TanganyController = require("../controllers/tangany_controller");
+const { response_parser } = require("../utils/response_parser");
 
 class CustodiansRequests extends TanganyController {
   constructor() {
@@ -68,8 +69,8 @@ class CustodiansRequests extends TanganyController {
           "X-Nonce": nonce,
         },
       }
-    ).then((res) => {
-      return res.json();
+    ).then(async (res) => {
+      return await response_parser(res, 200, "DLT");
     });
     return promise.records;
   }

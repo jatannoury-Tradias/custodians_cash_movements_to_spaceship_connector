@@ -20,12 +20,7 @@ function get_curr_day_minus_one_to_curr_day_midnight_date(
   from_date = null,
   to_date = null
 ) {
-  if (from_date && to_date) {
-    return {
-      start_date_timestamp: new Date(from_date).getTime(),
-      end_time_timestamp: new Date(to_date).getTime(),
-    };
-  }
+  
   let current_date =
     from_date === null
       ? new Date().getDate() - 1

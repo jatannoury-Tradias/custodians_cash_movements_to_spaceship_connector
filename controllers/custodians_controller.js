@@ -1,6 +1,5 @@
-const ed = require("@noble/ed25519");
-// const fetch = require("node-fetch");
-let nonce_lib = require("nonce-next");
+var logger = require("tracer").console();
+
 const CustodiansInputsParser = require("../helpers/custodians_inputs_parsers");
 const {
   ETHERSCAN_URL,
@@ -24,6 +23,7 @@ class CustodiansController extends CustodiansInputsParser {
   }
 
   async dlt_deposits(from_date = null, to_date = null) {
+    logger.info("Collecting dlt_deposits");
     const response = await this.make_dlt_api_request(
       "deposits",
       from_date,
@@ -32,9 +32,11 @@ class CustodiansController extends CustodiansInputsParser {
     return response;
   }
   async dlt_withdrawals(from_date = null, to_date = null) {
+    logger.info("Collecting dlt_withdrawals");
     return await this.make_dlt_api_request("withdrawals", from_date, to_date);
   }
   async eth_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting eth_transactions");
     return await this.make_tangany_api_request(
       ETHERSCAN_URL,
       from_date,
@@ -43,6 +45,7 @@ class CustodiansController extends CustodiansInputsParser {
     );
   }
   async eos_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting eos_transactions");
     return await this.make_tangany_api_request(
       EOS_URL,
       from_date,
@@ -51,6 +54,7 @@ class CustodiansController extends CustodiansInputsParser {
     );
   }
   async hbar_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting hbar_transactions");
     return await this.make_tangany_api_request(
       HBAR_URL,
       from_date,
@@ -60,6 +64,7 @@ class CustodiansController extends CustodiansInputsParser {
   }
 
   async polygon_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting polygon_transactions");
     return await this.make_tangany_api_request(
       POLYGON_URL,
       from_date,
@@ -69,6 +74,7 @@ class CustodiansController extends CustodiansInputsParser {
   }
 
   async sol_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting sol_transactions");
     return await this.make_tangany_api_request(
       SOL_URL,
       from_date,
@@ -77,6 +83,7 @@ class CustodiansController extends CustodiansInputsParser {
     );
   }
   async ftm_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting ftm_transactions");
     return await this.make_tangany_api_request(
       FTM_URL,
       from_date,
@@ -85,6 +92,7 @@ class CustodiansController extends CustodiansInputsParser {
     );
   }
   async ksm_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting ksm_transactions");
     return await this.make_tangany_api_request(
       KSM_URL,
       from_date,
@@ -93,6 +101,7 @@ class CustodiansController extends CustodiansInputsParser {
     );
   }
   async atom_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting atom_transactions");
     return await this.make_tangany_api_request(
       OKLINK_URL,
       from_date,
@@ -101,6 +110,7 @@ class CustodiansController extends CustodiansInputsParser {
     );
   }
   async oklink_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting oklink_transactions");
     return await this.make_tangany_api_request(
       OKLINK_URL,
       from_date,
@@ -109,6 +119,7 @@ class CustodiansController extends CustodiansInputsParser {
     );
   }
   async celo_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting celo_transactions");
     return await this.make_tangany_api_request(
       CELO_URL,
       from_date,
@@ -117,6 +128,7 @@ class CustodiansController extends CustodiansInputsParser {
     );
   }
   async near_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting near_transactions");
     return await this.make_tangany_api_request(
       NEAR_URL,
       from_date,
@@ -125,6 +137,7 @@ class CustodiansController extends CustodiansInputsParser {
     );
   }
   async sgb_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting sgb_transactions");
     return await this.make_tangany_api_request(
       SGB_URL,
       from_date,
@@ -133,6 +146,7 @@ class CustodiansController extends CustodiansInputsParser {
     );
   }
   async xtz_transactions(from_date = null, to_date = null) {
+    logger.info("Collecting xtz_transactions");
     return await this.make_tangany_api_request(
       XTZ_URL,
       from_date,

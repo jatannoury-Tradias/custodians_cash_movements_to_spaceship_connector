@@ -62,6 +62,33 @@ class SpaceshipController {
       Authorization: `Bearer ${this.user_token}`,
     };
   }
+  async get_all_addresses() {
+    let response = await fetch(
+      `https://${this.env.toLowerCase()}.tradias.link/api/addresses/?limit=1000`,
+      {
+        method: "GET",
+        headers: await this.user_headers(),
+      }
+    ).then(async (res) => await res.json());
+    let all_responses = response["items"];
+    const total_count = response["pagination"]["total_count"];
+    while (all_responses.length < total_count) {
+      response = await fetch(
+        `https://${this.env.toLowerCase()}.tradias.link/api/addresses/?limit=100&skip=${
+          all_responses.length
+        }`,
+        {
+          method: "GET",
+          headers: await this.user_headers(),
+        }
+      ).then(async (res) => await res.json());
+      all_responses = [...all_responses, ...response["items"]];
+    }
+    if (all_responses.length > total_count) {
+      throw `Something went wrong while fetching the addresses since we got ${all_responses.length} addresses while total_count = ${total_count}`;
+    }
+    return all_responses;
+  }
   async get_clients_addresses(return_static_response = false) {
     let response;
     let json_response;
@@ -119,7 +146,7 @@ class SpaceshipController {
 
     let json_response = await response.json();
   }
-  async get_custodians() {
+  async get_custodians(return_json_response = false) {
     let response = await fetch(
       `https://${this.env.toLowerCase()}.tradias.link/api/counter_parties/names?show_deleted=false&types=CUSTODIAN`,
       {
@@ -132,7 +159,7 @@ class SpaceshipController {
     for (let item of json_response["items"]) {
       this.custodians[item["id"]] = item["name"];
     }
-    return response;
+    return return_json_response ? json_response : response;
   }
 }
 async function spaceship_addresses_caller() {

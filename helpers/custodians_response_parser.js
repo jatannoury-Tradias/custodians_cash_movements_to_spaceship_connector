@@ -1,8 +1,6 @@
 const CashMvtsMapper = require("./cahs_mvts_mapper");
 const fs = require("fs");
-const csvParse = require("csv-parse");
-const action_mappers = require("../config/action_mappers");
-const time_unit_mapper = require("../config/time_unit_mapper");
+var logger = require("tracer").console();
 const custom_functions = require("../utils/custom_functions");
 class CustodianResponseParser extends CashMvtsMapper {
   constructor() {
@@ -17,17 +15,20 @@ class CustodianResponseParser extends CashMvtsMapper {
     clients_wallets,
     tradias_wallets
   ) {
-    const source_address = element["from"];
-    const destination_address = element["to"];
+    const source_address = element.sender_address;
+    const destination_address = element.recipient_address;
+    if (Object.keys(element).length === 0) {
+      return {};
+    }
     if (!source_address || !destination_address) {
       console.log();
     }
     const source_address_is_client_address = Object.keys(
       clients_wallets
-    ).includes(source_address.toLowerCase());
+    ).includes(source_address?.toLowerCase());
     const source_address_is_tradias_address = Object.keys(
       tradias_wallets
-    ).includes(source_address.toLowerCase());
+    ).includes(source_address?.toLowerCase());
     const destination_address_is_client_address = Object.keys(
       clients_wallets
     ).includes(destination_address.toLowerCase());
@@ -54,9 +55,24 @@ class CustodianResponseParser extends CashMvtsMapper {
       return undefined;
     }
   }
-  parse_status_filter(config_value, cash_mvt) {
+  parse_status_filter(config_value, cash_mvt, custodian, config_key) {
     config_value = config_value.trim();
-    return eval(this.replace_variables_with_values(config_value, cash_mvt));
+    let replaced_value = this.replace_variables_with_values(
+      config_value,
+      cash_mvt
+    );
+    if (replaced_value === undefined) {
+      logger.warn(
+        `Couldn't extract data for config_key of ${config_key} having config_value of ${config_value} for custodian ${custodian}`
+      );
+      return undefined;
+    } else if (replaced_value.includes("undefined")) {
+      logger.warn(
+        `Couldn't extract data for config_key of ${config_key} having config_value of ${config_value} for custodian ${custodian}`
+      );
+      return undefined;
+    }
+    return eval(replaced_value);
     if (config_value.includes("not equal")) {
       let splitted_values = config_value.split("not equal");
       return cash_mvt[splitted_values[0].trim()] !== splitted_values[1].trim();
@@ -86,11 +102,17 @@ class CustodianResponseParser extends CashMvtsMapper {
       const value = this.parse_value_access_from_syntax(accessPath, cash_mvt);
 
       // If the value is a string, wrap it with double quotes
+      if (!isNaN(+value)) {
+        return +value;
+      }
       const replacedValue = typeof value === "string" ? `"${value}"` : value;
 
       // Return the value to replace the matched pattern
       return replacedValue;
     });
+    if (modified_expression.includes("undefined")) {
+      return undefined;
+    }
     return modified_expression;
   }
   parse_value_access_from_syntax(config_value, cash_mvt) {
@@ -178,10 +200,40 @@ class CustodianResponseParser extends CashMvtsMapper {
       return eval("'" + modified_expression);
     }
   }
+  parse_config_value_from_spaceship(
+    config_value,
+    config_key,
+    cash_mvt,
+    mapped_data,
+    tradias_wallets,
+    clients_wallets
+  ) {
+    let counterparty = config_key
+      .toLowerCase()
+      .replace("_label", "")
+      .replace("_owner", "")
+      .trim();
+    const spaceship_wallets_lookup =
+      clients_wallets[mapped_data[counterparty]?.toLowerCase()] ||
+      tradias_wallets[mapped_data[counterparty]?.toLowerCase()];
+    if (!spaceship_wallets_lookup) {
+      logger.warn(
+        `${mapped_data[
+          counterparty
+        ]?.toLowerCase()} address not found in spaceship`
+      );
+      return undefined;
+    }
+    if (config_key.includes("_label")) {
+      return spaceship_wallets_lookup.label;
+    } else {
+      return (mapped_data[`${config_key}_name`] =
+        spaceship_wallets_lookup.owner_name);
+      // mapped_data[`${config_key}_id`] = spaceship_wallets_lookup.owner_id;
+    }
+  }
   parse_config_value(config_value, config_key, cash_mvt, mapped_data) {
-    if (config_value.toLowerCase() === "from spaceship") {
-      return "From Spaceship";
-    } else if (config_value.toLowerCase().startsWith("fixed value")) {
+    if (config_value.toLowerCase().startsWith("fixed value")) {
       return config_value.slice("fixed value".length).trim();
     } else if (config_key.toLowerCase() === "status_filter") {
       return this.parse_status_filter(config_value, cash_mvt);

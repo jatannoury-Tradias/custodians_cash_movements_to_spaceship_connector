@@ -1,4 +1,5 @@
 const TanganyParams = require("../config/tangany_params");
+const { response_parser } = require("../utils/response_parser");
 const sleep = require("../utils/sleep");
 
 class EOS extends TanganyParams {
@@ -6,34 +7,41 @@ class EOS extends TanganyParams {
     super();
   }
 
-  async do_eos_request(url, from_date = null, to_date = null, position = null) {
-    let params = this.get_eos_params();
-    const request_url = this.json_to_query_params(url, {
-      account_name: params["account_name"],
-    });
-    const res = await fetch(request_url, {
+  async do_eos_request(url, position = null) {
+    let params = this.get_eos_params(position);
+
+    return await fetch(url, {
       method: "POST",
       body: JSON.stringify(params),
-    }).then(async (res) => await res.json());
-    return res;
+    }).then(async (res) => {
+      return await response_parser(res, 200, "EOS");
+    });
   }
   async eos_request(url, from_date = null, to_date = null) {
-    let eos_res = await this.do_eos_request(
-      url,
-      (from_date = null),
-      (to_date = null),
-      this.get_eos_params()["pos"]
-    ).then((res) => {
+    let pos = -1;
+    let all_eos_data = await this.do_eos_request(url, -1).then((res) => {
       return res["actions"];
     });
     // Pagination
-    while (!this.date_is_earlier_than_today(eos_res[0]["block_time"])) {
-      eos_res = [await this.do_eos_request(url, null, null, 2), ...eos_res];
+    while (
+      all_eos_data.length > 0 &&
+      !this.date_is_earlier_than_from_date(
+        all_eos_data[0]["block_time"],
+        from_date
+      )
+    ) {
+      pos -= 100;
+      let eos_request = await this.do_eos_request(url, pos);
+      all_eos_data = [...eos_request.actions, ...all_eos_data];
     }
-    eos_res = eos_res.filter(
-      (element) => !this.date_is_earlier_than_today(element["block_time"])
+    all_eos_data = all_eos_data.filter((element) =>
+      this.date_is_between_input_dates(
+        element["block_time"],
+        from_date,
+        to_date
+      )
     );
-    return { txlist: eos_res };
+    return { txlist: all_eos_data };
   }
 }
 module.exports = EOS;
