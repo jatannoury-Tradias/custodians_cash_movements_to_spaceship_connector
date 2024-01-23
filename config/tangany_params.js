@@ -1,3 +1,5 @@
+const CashMvtsMapper = require("../helpers/cahs_mvts_mapper");
+const { AddressesService } = require("../utils/address_service");
 const {
   get_curr_day_to_curr_plus_one_midnight_date,
 } = require("../utils/date_utils");
@@ -23,25 +25,76 @@ class TanganyParams {
     this.polygon_url = POLYGON_URL;
     this.ftm_url = FTM_URL;
     this.ksm_url = KSM_URL;
-
-    this.hbar_tradias_wallet = env.HBAR_TRADIAS_WALLET;
-    this.polygon_tradias_wallet = env.POLYGON_TRADIAS_WALLETS;
-    this.ftm_tradias_wallet = env.FTM_TRADIAS_WALLET;
-    this.ksm_tradias_wallet = env.KSM_TRADIAS_WALLET;
-    this.eos_tradias_acc_name = env.EOS_TRADIAS_ACC_NAME;
-    this.eth_tradias_address = env.ETH_TRADIAS_ADDRESS;
-    this.sol_tradias_address = env.SOL_TRADIAS_ADDRESS;
-    this.celo_tradias_address = env.CELO_TRADIAS_ADDRESS;
-    this.sgb_tradias_address = env.SGB_TRADIAS_ADDRESS;
-    this.atom_wallet = env.ATOM_TRADIAS_ADDRESS;
-    this.xtz_tradias_wallet = env.XTZ_TRADIAS_ADDRESS;
-
+    this.dg_access_key = env.DG_ACCESS_KEY;
     this.eth_tradias_api_key = env.ETH_TRADIAS_API_KEY;
     this.polygon_tradias_api_key = env.POLYGON_ACCESS_KEY;
     this.celo_tradias_api_key = env.CELO_TRADIAS_API_KEY;
     this.ftm_tradias_api_key = env.FTM_ACCESS_KEY;
     this.ksm_tradias_api_key = env.KSM_ACCESS_KEY;
     this.sgb_tradias_api_key = env.SGB_ACCESS_KEY;
+    this.address_service_instance = new AddressesService();
+    this.cash_mvts_mapper_instance = new CashMvtsMapper();
+    this.csv_configs = this.cash_mvts_mapper_instance.parse_csv_config();
+    this.mapped_timeouts = this.csv_configs.reduce((result, element) => {
+      let current_timeout = parseInt(element.Spacing_Timeout);
+      result[element.Endpoint.toLowerCase().replace("oklink_", "")] = isNaN(
+        current_timeout
+      )
+        ? 0
+        : current_timeout;
+      return result;
+    }, {});
+  }
+
+  date_is_earlier_than_from_date(input_date, from_date) {
+    const is_decimal_regex = /^\d+$/;
+    if (
+      !Number.isInteger(input_date) &&
+      !(input_date instanceof Date) &&
+      input_date.endsWith("Z")
+    ) {
+      input_date = input_date.slice(0, -1);
+    }
+    if (!from_date || !input_date) {
+      return !this.date_is_earlier_than_today(input_date);
+    }
+    let date_object;
+    if (!(input_date instanceof Date)) {
+      if (Number.isInteger(input_date) || is_decimal_regex.test(input_date)) {
+        date_object = new Date(parseInt(input_date));
+      } else {
+        date_object = new Date(input_date);
+      }
+    } else {
+      date_object = input_date;
+    }
+    return date_object < new Date(from_date);
+  }
+  date_is_between_input_dates(input_date, from_date, to_date) {
+    const is_decimal_regex = /^\d+$/;
+    if (
+      !Number.isInteger(input_date) &&
+      typeof input_date !== "number" &&
+      input_date.endsWith("Z")
+    ) {
+      input_date = input_date.slice(0, -1);
+    }
+    if (!from_date || !to_date || !input_date) {
+      return !this.date_is_earlier_than_today(input_date);
+    }
+    let date_object;
+    if (!(input_date instanceof Date)) {
+      if (Number.isInteger(input_date) || is_decimal_regex.test(input_date)) {
+        date_object = new Date(
+          parseInt(input_date) * 10 ** (13 - input_date.length)
+        );
+      } else {
+        date_object = new Date(input_date);
+      }
+    } else {
+      date_object = input_date;
+    }
+    return date_object < new Date(to_date) && date_object > new Date(from_date);
   }
   date_is_earlier_than_today(cash_mvt_block_time) {
     // Create a new Date object in UTC using the values from the original date
@@ -105,19 +158,24 @@ class TanganyParams {
 
     return response["result"];
   }
-  get_hbar_params(from_date = null) {
-    const { start_date_timestamp, end_time_timestamp } =
-      get_curr_day_to_curr_plus_one_midnight_date(from_date);
+  get_hbar_params(from_date = null, to_date, address) {
+    if (!from_date || !to_date) {
+      const { start_date_timestamp, end_time_timestamp } =
+        get_curr_day_to_curr_plus_one_midnight_date(from_date);
+      return {
+        consensusStartInEpoch: start_date_timestamp,
+        consensusEndInEpoch: end_time_timestamp,
+      };
+    }
     return {
-      tradias_wallet: this.hbar_tradias_wallet,
-      consensusStartInEpoch: start_date_timestamp,
-      consensusEndInEpoch: end_time_timestamp,
+      consensusStartInEpoch: new Date(from_date).getTime(),
+      consensusEndInEpoch: new Date(to_date).getTime(),
     };
   }
   get_sgb_params(page) {
     return {
       "page-number": page,
-      "page-size": 10000,
+      "page-size": 1000,
       key: this.sgb_tradias_api_key,
     };
   }
@@ -148,13 +206,23 @@ class TanganyParams {
       apikey: this.polygon_tradias_api_key,
     }));
   }
-  get_celo_params(action) {
+  async get_celo_block_nb(date) {
+    return await fetch(
+      `https://api.celoscan.io/api?module=block&action=getblocknobytime&timestamp=${
+        new Date(date).getTime() / 1000
+      }&closest=before&apikey=${this.celo_tradias_api_key}`
+    ).then(async (res) => {
+      let json_res = await res.json();
+      return isNaN(parseInt(json_res.result)) ? 0 : parseInt(json_res.result);
+    });
+  }
+  async get_celo_params(action, from_date, to_date, address) {
     return {
       module: "account",
       action: action,
-      address: this.celo_tradias_address.trim(), // Assuming addresses may have leading/trailing spaces
-      startblock: 0,
-      endblock: 99999999,
+      address: address.trim(), // Assuming addresses may have leading/trailing spaces
+      startblock: await this.get_celo_block_nb(from_date),
+      endblock: await this.get_celo_block_nb(to_date),
       page: 0,
       offset: 10000,
       sort: "desc",
@@ -171,44 +239,37 @@ class TanganyParams {
     }
     return params;
   }
-  get_eos_params(pos = null, offset = null) {
+  get_eos_params(pos = null, address) {
     return {
-      account_name: this.eos_tradias_acc_name,
+      account_name: address,
       pos: pos === null ? -1 : pos,
-      offset: offset === null ? -100 : offset,
+      offset: -100,
     };
   }
-  get_atom_params(page = null, offset = null) {
+  get_atom_params(page = null, address, offset = null) {
     return {
-      address: this.atom_wallet,
+      address: address,
       chainShortName: "cosmos",
       page,
       limit: 50,
     };
   }
-  get_oklink_params(currency, address_mapping) {
+  get_oklink_params(currency, address) {
     let chainShortName = currency.toLowerCase();
-    const normal_curr_lookup = address_mapping[currency.toUpperCase()];
-    const special_curr_lookup = address_mapping[currency.toUpperCase()];
-    let address =
-      normal_curr_lookup !== undefined
-        ? normal_curr_lookup
-        : special_curr_lookup;
     let symbol = currency.toUpperCase();
-    if (currency === "AVAX-C") {
+    if (currency === "avax-c") {
       chainShortName = "avaxc";
-      address = address_mapping["AVAX"];
       symbol = "AVAXC";
-    } else if (currency === "ARB") {
+    } else if (currency === "arb") {
       chainShortName = "arbitrum";
-      address = address_mapping["ARB"];
     } else if (address === undefined) {
-      throw new Error(`ADDRESS OF ${currency} NOT FOUND IN ENV FILE`);
+      throw new Error(`ADDRESS OF ${currency} NOT FOUND IN SPACESHIP`);
     }
     return {
       chainShortName,
       address,
       symbol,
+      limit: 50,
     };
   }
   get_sol_params(from_date = null) {
@@ -221,39 +282,40 @@ class TanganyParams {
       toTime: end_time_timestamp,
     };
   }
-  async get_eth_params(from_date = null, to_date = null) {
+  async get_eth_params(address, from_date = null, to_date = null) {
     var ETH_NORMAL_queryParams = {
       module: "account",
       action: "txlist",
-      address: this.eth_tradias_address,
+      address: address,
       apikey: this.eth_tradias_api_key,
     };
     var ETH_INTERNAL_queryParams = {
       module: "account",
       action: "txlistinternal",
-      address: this.eth_tradias_address,
+      address: address,
       apikey: this.eth_tradias_api_key,
     };
 
     var ETH_ERCTOKEN_queryParams = {
       module: "account",
       action: "tokentx",
-      address: this.eth_tradias_address,
+      address: address,
       apikey: this.eth_tradias_api_key,
     };
     let current_date =
       from_date === null
         ? new Date().getDate() - 1
         : new Date(from_date).getDate();
-    let start_date_timestamp = new Date(
-      new Date(new Date().setDate(current_date)).setHours(0, 0, 0, 0)
-    ).getTime();
-    let end_time_timestamp =
-      to_date === null
-        ? new Date(
-            new Date(new Date().setDate(current_date + 1)).setHours(0, 0, 0, 0)
-          ).getTime()
-        : new Date(new Date(to_date).setHours(0, 0, 0, 0)).getTime();
+    let start_date_timestamp = !from_date
+      ? new Date(
+          new Date(new Date().setDate(current_date)).setHours(0, 0, 0, 0)
+        ).getTime()
+      : new Date(from_date).getTime();
+    let end_time_timestamp = !to_date
+      ? new Date(
+          new Date(new Date().setDate(current_date + 1)).setHours(0, 0, 0, 0)
+        ).getTime()
+      : new Date(to_date).getTime();
     let BLOCK_NB_START_queryParam = {
       module: "block",
       action: "getblocknobytime",

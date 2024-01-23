@@ -1,5 +1,55 @@
+const fs = require("fs");
 class CashMvtsMapper {
   constructor() {}
+  // Custom function to parse a CSV row with quoted fields
+  parseCSVRow(row) {
+    const values = [];
+    let currentField = "";
+
+    for (let i = 0; i < row.length; i++) {
+      const char = row[i];
+
+      if (char === ",") {
+        values.push(currentField);
+        currentField = "";
+      } else if (char === '"') {
+        // Handle quoted field
+        const closingQuoteIndex = row.indexOf('"', i + 1);
+        currentField += row.substring(i + 1, closingQuoteIndex);
+        i = closingQuoteIndex; // Skip the quoted part
+      } else {
+        currentField += char;
+      }
+    }
+
+    values.push(currentField); // Add the last field
+
+    return values;
+  }
+  parse_csv_config() {
+    const config = [];
+
+    // Read the CSV file
+    let csvFilePath =
+      "C:/Users/jtannoury/Desktop/settlement_request_project/custodians_cash_movements_to_spaceship_connector/data/static_data/custodians_response_parser_mapper.csv";
+    const fileContent = fs.readFileSync(csvFilePath, "utf8");
+
+    const rows = fileContent.trim().split("\n");
+    const headers = rows[0].split(",");
+
+    for (let i = 1; i < rows.length; i++) {
+      const values = this.parseCSVRow(rows[i]);
+      const rowObject = {};
+
+      for (let j = 0; j < headers.length; j++) {
+        rowObject[headers[j]?.trim()] = values[j]?.trim();
+      }
+
+      config.push(rowObject);
+    }
+
+    return config;
+  }
   dlt_cash_mvt_mapper(
     cash_mvt,
     source_address,

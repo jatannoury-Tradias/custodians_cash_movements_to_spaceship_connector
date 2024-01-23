@@ -40,7 +40,7 @@ class POLYGON extends TanganyParams {
 
     return all_res;
   }
-  async polygon_request(url, from_date, to_date) {
+  async polygon_request(url, from_date, to_date, requests_addresses) {
     let all_res = await this.do_polygon_request(url);
     let oldest_txlist_mvt =
       parseInt(all_res["txlist"][all_res["txlist"].length - 1]?.timeStamp) *

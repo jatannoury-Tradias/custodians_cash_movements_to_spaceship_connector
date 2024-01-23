@@ -55,7 +55,7 @@ class FTM extends TanganyParams {
 
     return all_res;
   }
-  async ftm_request(url, from_date, to_date) {
+  async ftm_request(url, from_date, to_date, requests_addresses) {
     let ftm_res = await this.do_ftm_request(url);
     ftm_res = Object.keys(ftm_res).map((action) => {
       return ftm_res[action].filter(

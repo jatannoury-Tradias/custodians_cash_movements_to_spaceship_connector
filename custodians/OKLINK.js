@@ -1,5 +1,6 @@
 const TanganyParams = require("../config/tangany_params");
 const { response_parser } = require("../utils/response_parser");
+const sleep = require("../utils/sleep");
 var logger = require("tracer").console();
 require("dotenv").config();
 
@@ -33,53 +34,67 @@ class OKLINK extends TanganyParams {
         "OK-ACCESS-KEY": this.oklink_access_key,
       },
     }).then(async (res) => {
-      return await response_parser(res, 200, `Oklink ${currency}`);
+      return await response_parser(
+        res,
+        200,
+        `Oklink ${currency} address ${params.address}`
+      );
     });
   }
-  async atom_request(url, from_date = null, to_date = null) {
+  async atom_request(
+    url,
+    from_date = null,
+    to_date = null,
+    requests_addresses
+  ) {
+    let all_atom_data = {
+      txlist: [],
+    };
     url = `${url}/v5/explorer/address/normal-transaction-cosmos?`;
-    let page = 0;
-    let atom_res = await this.do_oklink_request(
-      "ATOM",
-      "GET",
-      url,
-      this.get_atom_params(page)
-    );
-    let all_atom_res = [
-      ...(atom_res?.data?.transactionLists ||
-        atom_res?.data?.transactionList ||
-        []),
-    ];
-    // Pagination
-    while (
-      all_atom_res.length > 0 &&
-      !this.date_is_earlier_than_from_date(
-        all_atom_res[all_atom_res.length - 1].transactionTime,
-        from_date
-      )
-    ) {
-      page = parseInt(atom_res["data"]["page"]) + 1;
-      atom_res = await this.do_oklink_request(
+    for (let address of requests_addresses.atom) {
+      let page = 0;
+      let atom_res = await this.do_oklink_request(
         "ATOM",
         "GET",
         url,
-        this.get_atom_params(page),
-        page
+        this.get_atom_params(page, address)
       );
-      all_atom_res = [
-        ...(atom_res?.data?.transactionLists || []),
-        ...all_atom_res,
+      all_atom_data.txlist = [
+        ...(atom_res?.data?.transactionLists ||
+          atom_res?.data?.transactionList ||
+          []),
+        ...all_atom_data.txlist,
       ];
-    }
-    return {
-      txlist: all_atom_res.filter((element) =>
-        this.date_is_between_input_dates(
-          element.transactionTime,
-          from_date,
-          to_date
+      // Pagination
+      while (
+        all_atom_data.txlist.length > 0 &&
+        !this.date_is_earlier_than_from_date(
+          all_atom_data.txlist[all_atom_data.txlist.length - 1].transactionTime,
+          from_date
         )
-      ),
-    };
+      ) {
+        page = parseInt(atom_res["data"]["page"]) + 1;
+        atom_res = await this.do_oklink_request(
+          "ATOM",
+          "GET",
+          url,
+          this.get_atom_params(page, address),
+          page
+        );
+        all_atom_data.txlist = [
+          ...(atom_res?.data?.transactionLists || []),
+          ...all_atom_data.txlist,
+        ];
+      }
+      await sleep(this.mapped_timeouts.atom);
+    }
+    return all_atom_data.txlist.filter((element) =>
+      this.date_is_between_input_dates(
+        element.transactionTime,
+        from_date,
+        to_date
+      )
+    );
   }
   async paginate_oklink(from_date, to_date, txs_url, oklink_params, currency) {
     let txs_request = await this.do_oklink_request(
@@ -143,47 +158,64 @@ class OKLINK extends TanganyParams {
     let oklink_data = {};
     return { txs_url, token_txs_url, oklink_data };
   }
-  async oklink_request(url, from_date = null, to_date = null) {
+  async oklink_request(
+    url,
+    from_date = null,
+    to_date = null,
+    requests_addresses
+  ) {
+    let all_addresses_cash_mvts = {
+      tokentx: {},
+      txlist: {},
+    };
     const { txs_url, token_txs_url, oklink_data } =
       this.get_oklink_variables(url);
-    for (const currency_type of Object.keys(this.address_mapping)) {
-      for (let currency of Object.keys(this.address_mapping[currency_type])) {
-        logger.info(`Requesting Oklink ${currency}`);
-        const oklink_params = this.get_oklink_params(
-          currency,
-          this.address_mapping[currency_type]
+    const currencies = Object.keys(requests_addresses)
+      .map((element) => element.replace("oklink_", ""))
+      .filter((element) => element !== "undefined");
+    let oklink_currencies = new Set(
+      this.csv_configs
+        .filter((config) => config.Custodian.toLowerCase().includes("oklink"))
+        .map((config) => config.Endpoint.toLowerCase().replace("oklink_", ""))
+    );
+    for (let currency of oklink_currencies) {
+      if (!Object.keys(requests_addresses).includes(currency)) {
+        logger.warn(
+          `Currency ${currency} doesn't have a configured address in spaceship`
         );
+        continue;
+      }
+      for (const address of requests_addresses[currency.toLowerCase()]) {
+        logger.info(`Requesting Oklink ${currency}`);
+        const oklink_params = this.get_oklink_params(currency, address);
         let token_txs_data = [];
-        if (currency_type !== "special") {
-          token_txs_data = await this.paginate_oklink(
+        if (!["btc", "doge"].includes(currency)) {
+          all_addresses_cash_mvts.tokentx = [
+            ...(all_addresses_cash_mvts.tokentx?.[currency] || []),
+            ...(await this.paginate_oklink(
+              from_date,
+              to_date,
+              token_txs_url,
+              oklink_params,
+              currency
+            )),
+          ];
+        }
+        all_addresses_cash_mvts.txlist = [
+          ...(all_addresses_cash_mvts.txlist?.[currency] || []),
+          ...(await this.paginate_oklink(
             from_date,
             to_date,
-            token_txs_url,
+            txs_url,
             oklink_params,
             currency
-          );
-        }
-        const normal_txs_data = await this.paginate_oklink(
-          from_date,
-          to_date,
-          txs_url,
-          oklink_params,
-          currency
-        );
-        if (currency.toLowerCase().includes("matic")) {
-          currency = "polygon";
-        } else if (currency.toLowerCase().includes("avax")) {
-          currency = "avax-c";
-        }
-
-        oklink_data[currency] = {
-          txlist: normal_txs_data,
-          tokentx: token_txs_data,
-        };
+          )),
+        ];
+        await sleep(this.mapped_timeouts[currency]);
       }
     }
 
-    return oklink_data;
+    return all_addresses_cash_mvts;
   }
 }
 module.exports = OKLINK;

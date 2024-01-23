@@ -77,72 +77,90 @@ class FlowController extends CustodianResponseParser {
       bcb_transactions,
     };
   }
-  async collect_currencies_data(from_date, to_date) {
-    let etherscan = await this.custodians_controller.eth_transactions(
+  async collect_currencies_data(from_date, to_date, requests_addresses) {
+    let dlt_deposits = await this.custodians_controller.dlt_deposits(
       from_date,
-      to_date
+      to_date,
+      requests_addresses
     );
-    let oklink = await this.custodians_controller.oklink_transactions(
+    let dlt_withdrawals = await this.custodians_controller.dlt_withdrawals(
       from_date,
-      to_date
+      to_date,
+      requests_addresses
     );
-
     let celo = await this.custodians_controller.celo_transactions(
       from_date,
-      to_date
+      to_date,
+      requests_addresses
     );
-    let xtz = await this.custodians_controller.xtz_transactions(
+    let ksm = await this.custodians_controller.ksm_transactions(
       from_date,
-      to_date
+      to_date,
+      requests_addresses
     );
 
-    // let dlt_deposits = await this.custodians_controller.dlt_deposits(
-    //   from_date,
-    //   to_date
-    // );
-    // let dlt_withdrawals = await this.custodians_controller.dlt_withdrawals(
-    //   from_date,
-    //   to_date
-    // );
+    let oklink = await this.custodians_controller.oklink_transactions(
+      from_date,
+      to_date,
+      requests_addresses
+    );
+
+    let xtz = await this.custodians_controller.xtz_transactions(
+      from_date,
+      to_date,
+      requests_addresses
+    );
 
     let eos = await this.custodians_controller.eos_transactions(
       from_date,
-      to_date
+      to_date,
+      requests_addresses
     );
-    // let hbar= await this.custodians_controller.hbar_transactions(
-    //   from_date,
-    //   to_date
-    // );
+    let hbar = await this.custodians_controller.hbar_transactions(
+      from_date,
+      to_date,
+      requests_addresses
+    );
     let solanafm = await this.custodians_controller.sol_transactions(
       from_date,
-      to_date
+      to_date,
+      requests_addresses
     );
     let atom = await this.custodians_controller.atom_transactions(
       from_date,
-      to_date
+      to_date,
+      requests_addresses
     );
     let near = await this.custodians_controller.near_transactions(
       from_date,
-      to_date
+      to_date,
+      requests_addresses
     );
 
     let covalent_sgb = await this.custodians_controller.sgb_transactions(
       from_date,
-      to_date
+      to_date,
+      requests_addresses
+    );
+    let etherscan = await this.custodians_controller.eth_transactions(
+      from_date,
+      to_date,
+      requests_addresses
     );
     oklink = {
       ...oklink,
       atom,
     };
-    // let dltcustody = {
-    //   deposits: dlt_deposits,
-    //   withdrawals: dlt_withdrawals,
-    // };
+    let dltcustody = {
+      deposits: dlt_deposits,
+      withdrawals: dlt_withdrawals,
+    };
     return {
+      ksm,
       etherscan,
-      // dltcustody,
+      dltcustody,
       eos,
-      // hbar,
+      hbar,
       solanafm,
       near,
       oklink,
@@ -288,7 +306,7 @@ class FlowController extends CustodianResponseParser {
       }
     }
     await client_deposit(data, this, clients_wallets, tradias_wallets);
-    filter_data(data,clients_wallets,tradias_wallets)
+    filter_data(data, clients_wallets, tradias_wallets);
   }
 
   async fiat_connections_to_spaceship_wallets_resolver(

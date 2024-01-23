@@ -10,30 +10,44 @@ class XTZ extends TanganyParams {
   constructor() {
     super();
   }
-  async do_xtz_request(url, lastId = null) {
+  async do_xtz_request(url, address, lastId = null) {
     const request_url = this.json_to_query_params(
       url,
       this.get_xtz_params(lastId)
     );
     return await fetch(request_url).then(async (res) => {
-      return await response_parser(res, 200, "XTZ");
+      return await response_parser(res, 200, `XTZ for address ${address}`);
     });
   }
-  async xtz_request(url, from_date, to_date) {
-    url = `${url}/${this.xtz_tradias_wallet}/operations?`;
-    let res = await this.do_xtz_request(url);
-    let all_res = [...res];
-    while (
-      all_res.length !== 0 &&
-      !this.date_is_earlier_than_from_date(
-        all_res[all_res.length - 1]["timestamp"],
-        from_date
-      )
-    ) {
-      res = await this.do_xtz_request(url, all_res[all_res.length - 1]["id"]);
-      all_res = [...all_res, ...res];
+  async xtz_request(url, from_date, to_date, requests_addresses) {
+    let all_xtz_res = {
+      txlist: [],
+    };
+    for (let address of requests_addresses.xtz) {
+      let res = await this.do_xtz_request(
+        `${url}/${address}/operations?`,
+        address
+      );
+      all_xtz_res.txlist = [...all_xtz_res.txlist, ...res];
+      while (
+        all_xtz_res.txlist.length !== 0 &&
+        res.length !== 0 &&
+        !this.date_is_earlier_than_from_date(
+          all_xtz_res.txlist[all_xtz_res.txlist.length - 1]["timestamp"],
+          from_date
+        )
+      ) {
+        res = await this.do_xtz_request(
+          `${url}/${address}/operations?`,
+          address,
+          all_xtz_res.txlist[all_xtz_res.txlist.length - 1]["id"]
+        );
+        all_xtz_res.txlist = [...all_xtz_res.txlist, ...res];
+      }
+      await sleep(this.mapped_timeouts.xtz);
     }
-    return all_res.filter((element) =>
+
+    return all_xtz_res.txlist.filter((element) =>
       this.date_is_between_input_dates(element.timestamp, from_date, to_date)
     );
   }

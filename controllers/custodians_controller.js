@@ -35,123 +35,160 @@ class CustodiansController extends CustodiansInputsParser {
     logger.info("Collecting dlt_withdrawals");
     return await this.make_dlt_api_request("withdrawals", from_date, to_date);
   }
-  async eth_transactions(from_date = null, to_date = null) {
+  async eth_transactions(from_date = null, to_date = null, requests_addresses) {
     logger.info("Collecting eth_transactions");
     return await this.make_tangany_api_request(
       ETHERSCAN_URL,
       from_date,
       to_date,
-      "ETH"
+      "ETH",
+      requests_addresses
     );
   }
-  async eos_transactions(from_date = null, to_date = null) {
+  async eos_transactions(from_date = null, to_date = null, requests_addresses) {
     logger.info("Collecting eos_transactions");
     return await this.make_tangany_api_request(
       EOS_URL,
       from_date,
       to_date,
-      "EOS"
+      "EOS",
+      requests_addresses
     );
   }
-  async hbar_transactions(from_date = null, to_date = null) {
+  async hbar_transactions(
+    from_date = null,
+    to_date = null,
+    requests_addresses
+  ) {
     logger.info("Collecting hbar_transactions");
     return await this.make_tangany_api_request(
       HBAR_URL,
       from_date,
       to_date,
-      "HBAR"
+      "HBAR",
+      requests_addresses
     );
   }
 
-  async polygon_transactions(from_date = null, to_date = null) {
+  async polygon_transactions(
+    from_date = null,
+    to_date = null,
+    requests_addresses
+  ) {
     logger.info("Collecting polygon_transactions");
     return await this.make_tangany_api_request(
       POLYGON_URL,
       from_date,
       to_date,
-      "POLYGON"
+      "POLYGON",
+      requests_addresses
     );
   }
 
-  async sol_transactions(from_date = null, to_date = null) {
+  async sol_transactions(from_date = null, to_date = null, requests_addresses) {
     logger.info("Collecting sol_transactions");
     return await this.make_tangany_api_request(
       SOL_URL,
       from_date,
       to_date,
-      "SOL"
+      "SOL",
+      requests_addresses
     );
   }
-  async ftm_transactions(from_date = null, to_date = null) {
+  async ftm_transactions(from_date = null, to_date = null, requests_addresses) {
     logger.info("Collecting ftm_transactions");
     return await this.make_tangany_api_request(
       FTM_URL,
       from_date,
       to_date,
-      "FTM"
+      "FTM",
+      requests_addresses
     );
   }
-  async ksm_transactions(from_date = null, to_date = null) {
+  async ksm_transactions(from_date = null, to_date = null, requests_addresses) {
     logger.info("Collecting ksm_transactions");
     return await this.make_tangany_api_request(
       KSM_URL,
       from_date,
       to_date,
-      "KSM"
+      "KSM",
+      requests_addresses
     );
   }
-  async atom_transactions(from_date = null, to_date = null) {
+  async atom_transactions(
+    from_date = null,
+    to_date = null,
+    requests_addresses
+  ) {
     logger.info("Collecting atom_transactions");
     return await this.make_tangany_api_request(
       OKLINK_URL,
       from_date,
       to_date,
-      "ATOM"
+      "ATOM",
+      requests_addresses
     );
   }
-  async oklink_transactions(from_date = null, to_date = null) {
+  async oklink_transactions(
+    from_date = null,
+    to_date = null,
+    requests_addresses
+  ) {
     logger.info("Collecting oklink_transactions");
     return await this.make_tangany_api_request(
       OKLINK_URL,
       from_date,
       to_date,
-      "OKLINK"
+      "OKLINK",
+      requests_addresses
     );
   }
-  async celo_transactions(from_date = null, to_date = null) {
+  async celo_transactions(
+    from_date = null,
+    to_date = null,
+    requests_addresses
+  ) {
     logger.info("Collecting celo_transactions");
     return await this.make_tangany_api_request(
       CELO_URL,
       from_date,
       to_date,
-      "CELO"
+      "CELO",
+      requests_addresses
     );
   }
-  async near_transactions(from_date = null, to_date = null) {
+  async near_transactions(
+    from_date = null,
+    to_date = null,
+    requests_addresses
+  ) {
     logger.info("Collecting near_transactions");
     return await this.make_tangany_api_request(
       NEAR_URL,
       from_date,
       to_date,
-      "NEAR"
+      "NEAR",
+      requests_addresses
     );
   }
-  async sgb_transactions(from_date = null, to_date = null) {
+  async sgb_transactions(from_date = null, to_date = null, requests_addresses) {
     logger.info("Collecting sgb_transactions");
     return await this.make_tangany_api_request(
       SGB_URL,
       from_date,
       to_date,
-      "SGB"
+      "SGB",
+      requests_addresses
     );
   }
-  async xtz_transactions(from_date = null, to_date = null) {
+  async xtz_transactions(from_date = null, to_date = null, requests_addresses) {
     logger.info("Collecting xtz_transactions");
     return await this.make_tangany_api_request(
       XTZ_URL,
       from_date,
       to_date,
-      "XTZ"
+      "XTZ",
+      requests_addresses
     );
   }
 }

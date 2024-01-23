@@ -10,38 +10,57 @@ class SGB extends TanganyParams {
   constructor() {
     super();
   }
-  async do_sgb_request(url) {
+  async do_sgb_request(url, address) {
     return await fetch(url, {
       headers: this.sgb_headers,
-    }).then(async (res) => await response_parser(res, 200, "SGB"));
+    }).then(
+      async (res) =>
+        await response_parser(res, 200, `SGB for address ${address}`)
+    );
   }
-  async sgb_request(url, from_date, to_date) {
-    url = `${url}/address/${this.sgb_tradias_address}/transactions_v2/?`;
-    let page = 0;
-    let request_url = this.json_to_query_params(url, this.get_sgb_params(page));
-    const res = await this.do_sgb_request(request_url);
-    let all_res = [...res.data.items];
-    while (
-      all_res.length > 0 &&
-      !this.date_is_earlier_than_from_date(
-        all_res[all_res.length - 1]["block_signed_at"],
-        from_date
-      )
-    ) {
-      page += 1;
-      request_url = this.json_to_query_params(url, this.get_sgb_params(page));
-      const res = await this.do_sgb_request(request_url);
-      all_res = [...all_res, ...res.data.items];
-    }
-    return {
-      txlist: all_res.filter((element) =>
-        this.date_is_between_input_dates(
-          element["block_signed_at"],
-          from_date,
-          to_date
+  async sgb_request(url, from_date, to_date, requests_addresses) {
+    let all_sgb_requests = { txlist: [] };
+    for (let address of requests_addresses.covalent_sgb) {
+      let page = 0;
+      let request_url = this.json_to_query_params(
+        `${url}/address/${address}/transactions_v2/?`,
+        this.get_sgb_params(page)
+      );
+      let res = await this.do_sgb_request(request_url, address);
+      all_sgb_requests.txlist = [...res.data.items, ...all_sgb_requests.txlist];
+      while (
+        res.data.items.length !== 0 &&
+        !this.date_is_earlier_than_from_date(
+          all_sgb_requests.txlist[all_sgb_requests.txlist.length - 1][
+            "block_signed_at"
+          ],
+          from_date
         )
-      ),
-    };
+      ) {
+        page += 1;
+        request_url = this.json_to_query_params(
+          `${url}/address/${address}/transactions_v2/?`,
+          this.get_sgb_params(page)
+        );
+        const res = await this.do_sgb_request(request_url, address);
+        if (res.data.pagination.has_more === false) {
+          all_sgb_requests.txlist = [
+            ...all_sgb_requests.txlist,
+            ...res.data.items,
+          ];
+          break;
+        }
+      }
+      await sleep(this.mapped_timeouts.covalent_sgb);
+    }
+
+    return all_sgb_requests.txlist.filter((element) =>
+      this.date_is_between_input_dates(
+        element["block_signed_at"],
+        from_date,
+        to_date
+      )
+    );
   }
 }
 module.exports = SGB;

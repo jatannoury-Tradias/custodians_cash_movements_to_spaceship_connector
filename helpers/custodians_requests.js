@@ -10,46 +10,100 @@ class CustodiansRequests extends TanganyController {
     url,
     from_date = null,
     to_date = null,
-    tangany_name
+    tangany_name,
+    requests_addresses
   ) {
     switch (tangany_name) {
       case "EOS":
-        return await this.eos_instance.eos_request(url, from_date, to_date);
+        return await this.eos_instance.eos_request(
+          url,
+          from_date,
+          to_date,
+          requests_addresses
+        );
       case "HBAR":
-        return await this.hbar_instance.hbar_request(url, from_date, to_date);
+        return await this.hbar_instance.hbar_request(
+          url,
+          from_date,
+          to_date,
+          requests_addresses
+        );
       case "SOL":
-        return await this.sol_instance.sol_request(url, from_date, to_date);
+        return await this.sol_instance.sol_request(
+          url,
+          from_date,
+          to_date,
+          requests_addresses
+        );
       case "FTM":
-        return await this.ftm_instance.ftm_request(url, from_date, to_date);
+        return await this.ftm_instance.ftm_request(
+          url,
+          from_date,
+          to_date,
+          requests_addresses
+        );
       case "KSM":
-        return await this.ksm_instance.ksm_request(url, from_date, to_date);
+        return await this.ksm_instance.ksm_request(
+          url,
+          from_date,
+          to_date,
+          requests_addresses
+        );
       case "ATOM":
-        return await this.oklink_instance.atom_request(url, from_date, to_date);
+        return await this.oklink_instance.atom_request(
+          url,
+          from_date,
+          to_date,
+          requests_addresses
+        );
       case "NEAR":
-        return await this.near_instance.near_request(url, from_date, to_date);
+        return await this.near_instance.near_request(
+          url,
+          from_date,
+          to_date,
+          requests_addresses
+        );
       case "SGB":
-        return await this.sgb_instance.sgb_request(url, from_date, to_date);
+        return await this.sgb_instance.sgb_request(
+          url,
+          from_date,
+          to_date,
+          requests_addresses
+        );
       case "XTZ":
-        return await this.xtz_instance.xtz_request(url, from_date, to_date);
+        return await this.xtz_instance.xtz_request(
+          url,
+          from_date,
+          to_date,
+          requests_addresses
+        );
       case "CELO":
-        return await this.celo_instance.celo_request(url, from_date, to_date);
+        return await this.celo_instance.celo_request(
+          url,
+          from_date,
+          to_date,
+          requests_addresses
+        );
       case "OKLINK":
         return await this.oklink_instance.oklink_request(
           url,
           from_date,
-          to_date
+          to_date,
+          requests_addresses
         );
       case "ETH":
         return await this.etherscan_instance.eth_request(
           url,
           from_date,
-          to_date
+          to_date,
+          requests_addresses
         );
       case "POLYGON":
         return await this.polygon_instance.polygon_request(
           url,
           from_date,
-          to_date
+          to_date,
+          requests_addresses
         );
       default:
         throw Error(
