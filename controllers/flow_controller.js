@@ -78,75 +78,87 @@ class FlowController extends CustodianResponseParser {
     };
   }
   async collect_currencies_data(from_date, to_date, requests_addresses) {
-    let dlt_deposits = await this.custodians_controller.dlt_deposits(
-      from_date,
-      to_date,
-      requests_addresses
-    );
-    let dlt_withdrawals = await this.custodians_controller.dlt_withdrawals(
-      from_date,
-      to_date,
-      requests_addresses
-    );
-    let celo = await this.custodians_controller.celo_transactions(
-      from_date,
-      to_date,
-      requests_addresses
-    );
-    let ksm = await this.custodians_controller.ksm_transactions(
-      from_date,
-      to_date,
-      requests_addresses
-    );
-
-    let oklink = await this.custodians_controller.oklink_transactions(
-      from_date,
-      to_date,
-      requests_addresses
-    );
-
-    let xtz = await this.custodians_controller.xtz_transactions(
-      from_date,
-      to_date,
-      requests_addresses
-    );
-
-    let eos = await this.custodians_controller.eos_transactions(
-      from_date,
-      to_date,
-      requests_addresses
-    );
-    let hbar = await this.custodians_controller.hbar_transactions(
-      from_date,
-      to_date,
-      requests_addresses
-    );
-    let solanafm = await this.custodians_controller.sol_transactions(
-      from_date,
-      to_date,
-      requests_addresses
-    );
-    let atom = await this.custodians_controller.atom_transactions(
-      from_date,
-      to_date,
-      requests_addresses
-    );
-    let near = await this.custodians_controller.near_transactions(
-      from_date,
-      to_date,
-      requests_addresses
-    );
-
-    let covalent_sgb = await this.custodians_controller.sgb_transactions(
-      from_date,
-      to_date,
-      requests_addresses
-    );
-    let etherscan = await this.custodians_controller.eth_transactions(
-      from_date,
-      to_date,
-      requests_addresses
-    );
+    let [
+      dlt_deposits,
+      dlt_withdrawals,
+      celo,
+      ksm,
+      oklink,
+      xtz,
+      eos,
+      hbar,
+      solanafm,
+      atom,
+      near,
+      covalent_sgb,
+      etherscan,
+    ] = await Promise.all([
+      this.custodians_controller.dlt_deposits(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+      this.custodians_controller.dlt_withdrawals(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+      this.custodians_controller.celo_transactions(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+      this.custodians_controller.ksm_transactions(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+      this.custodians_controller.oklink_transactions(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+      this.custodians_controller.xtz_transactions(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+      this.custodians_controller.eos_transactions(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+      this.custodians_controller.hbar_transactions(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+      this.custodians_controller.sol_transactions(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+      this.custodians_controller.atom_transactions(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+      this.custodians_controller.near_transactions(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+      this.custodians_controller.sgb_transactions(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+      this.custodians_controller.eth_transactions(
+        from_date,
+        to_date,
+        requests_addresses
+      ),
+    ]);
     oklink = {
       ...oklink,
       atom,
@@ -231,7 +243,8 @@ class FlowController extends CustodianResponseParser {
             cash_mvt,
             mapped_data,
             tradias_wallets,
-            clients_wallets
+            clients_wallets,
+            `${config.Custodian} - ${config.Endpoint} - ${config.Transaction_key}`
           );
         } else {
           extracted_data = this.parse_config_value(
@@ -247,7 +260,7 @@ class FlowController extends CustodianResponseParser {
           extracted_data === Infinity
         ) {
           logger.warn(
-            `Couldn't extract data for config_key of ${config_key} having config_value of ${config_value} for custodian ${custodian}`
+            `PARSE: Couldn't extract data for config_key of ${config_key} having config_value of ${config_value} for custodian ${custodian}`
           );
           return {};
         }
@@ -271,6 +284,19 @@ class FlowController extends CustodianResponseParser {
       }
       logger.debug(`Parsing ${custodian}'s ${cash_mvt_type}`);
       if (!custodian.includes("oklink")) {
+        if (!Object.keys(data).includes(custodian)) {
+          logger.error(
+            `PARSE: ${custodian} not included in fetched data: ${Object.keys(
+              data
+            )}`
+          );
+          continue;
+        } else if (!Object.keys(data[custodian]).includes(cash_mvt_type)) {
+          logger.error(
+            `PARSE: ${cash_mvt_type} cash_mvt_type not included in ${custodian} fetched data`
+          );
+          continue;
+        }
         try {
           let parsed_data = await this.parse_cash_mvt_type(
             data[custodian][cash_mvt_type],
@@ -279,16 +305,23 @@ class FlowController extends CustodianResponseParser {
             clients_wallets,
             tradias_wallets
           );
-          data[custodian][cash_mvt_type] = parsed_data;
+          data[custodian][cash_mvt_type] = parsed_data.filter(
+            (element) => Object.keys(element).length !== 0
+          );
         } catch (error) {
           logger.error(
-            `Something went wrong while parsing ${custodian}'s ${cash_mvt_type}`
+            `PARSE: Something went wrong while parsing ${custodian}'s ${cash_mvt_type}`
           );
-          logger.error(`Error that occured:${error}`);
+          logger.error(`PARSE: Error that occured:${error}`);
+          data[custodian][cash_mvt_type] = [];
         }
       } else {
+        custodian = custodian.replace("oklink_", "");
         try {
-          custodian = custodian.replace("oklink_", "");
+          if (Array.isArray(data["oklink"][custodian])) {
+            let custodian_data = data["oklink"][custodian];
+            data["oklink"][custodian] = { txlist: custodian_data };
+          }
           let parsed_data = await this.parse_cash_mvt_type(
             data["oklink"][custodian][cash_mvt_type],
             config,
@@ -296,17 +329,26 @@ class FlowController extends CustodianResponseParser {
             clients_wallets,
             tradias_wallets
           );
-          data["oklink"][custodian][cash_mvt_type] = parsed_data;
+          data["oklink"][custodian][cash_mvt_type] = parsed_data?.filter(
+            (element) => Object.keys(element).length > 0
+          );
         } catch (error) {
           logger.error(
-            `Something went wrong while parsing ${custodian}'s ${cash_mvt_type}`
+            `PARSE: Something went wrong while parsing ${custodian}'s ${cash_mvt_type}`
           );
-          logger.error(`Error that occured:${error}`);
+          logger.error(`PARSE: Error that occured:${error}`);
+          data["oklink"][custodian][cash_mvt_type] = [];
         }
       }
     }
     await client_deposit(data, this, clients_wallets, tradias_wallets);
-    filter_data(data, clients_wallets, tradias_wallets);
+    return await filter_data(
+      data,
+      clients_wallets,
+      tradias_wallets,
+      from_date,
+      to_date
+    );
   }
 
   async fiat_connections_to_spaceship_wallets_resolver(
@@ -318,16 +360,35 @@ class FlowController extends CustodianResponseParser {
     let collected_fiat_data = await this.collect_fiat_data(from_date, to_date);
   }
 
-  async push_transactions(flow_controller_instance) {
-    Object.keys(flow_controller_instance).forEach(async (element) => {
-      await flow_controller_instance[element].forEach(async (cash_mvt) => {
-        await this.spaceship_controller.post_transaction(cash_mvt);
-      });
-    });
+  async push_transactions(parsed_data, addresses_mappings) {
+    parsed_data = parsed_data.slice(0, 1);
+    for (let cash_mvt of parsed_data) {
+      await this.spaceship_controller.post_transaction(
+        cash_mvt,
+        addresses_mappings
+      );
+    }
   }
 }
 module.exports = FlowController;
 if (require.main === module) {
-  let flow_controller_instance = new FlowController();
-  flow_controller_instance.parse_data(custodian_data);
+  async function initialize() {
+    try {
+      let flow_controller = new FlowController();
+      const { clients_wallets, tradias_wallets } =
+        await flow_controller.wallets_to_lower_case(
+          await flow_controller.get_clients_and_tradias_wallets()
+        );
+
+      let flow_controller_instance = new FlowController();
+      await flow_controller_instance.parse_data(
+        custodian_data,
+        clients_wallets,
+        tradias_wallets
+      );
+    } catch (error) {
+      console.error("Error during initialization:", error);
+    }
+  }
+  initialize();
 }

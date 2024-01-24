@@ -152,10 +152,19 @@ class OKLINK extends TanganyParams {
     return all_cash_mvts;
   }
 
-  get_oklink_variables(url) {
+  get_oklink_variables(url, oklink_currencies) {
     let txs_url = `${url}/v5/explorer/address/transaction-list?`;
     let token_txs_url = `${url}/v5/explorer/address/token-transaction-list?`;
-    let oklink_data = {};
+    let oklink_data = Array.from(oklink_currencies).reduce(
+      (result, element) => {
+        result[element] = {};
+        result[element].tokentx = [];
+        result[element].txlist = [];
+        return result;
+      },
+      {}
+    );
+
     return { txs_url, token_txs_url, oklink_data };
   }
   async oklink_request(
@@ -164,12 +173,6 @@ class OKLINK extends TanganyParams {
     to_date = null,
     requests_addresses
   ) {
-    let all_addresses_cash_mvts = {
-      tokentx: {},
-      txlist: {},
-    };
-    const { txs_url, token_txs_url, oklink_data } =
-      this.get_oklink_variables(url);
     const currencies = Object.keys(requests_addresses)
       .map((element) => element.replace("oklink_", ""))
       .filter((element) => element !== "undefined");
@@ -177,6 +180,10 @@ class OKLINK extends TanganyParams {
       this.csv_configs
         .filter((config) => config.Custodian.toLowerCase().includes("oklink"))
         .map((config) => config.Endpoint.toLowerCase().replace("oklink_", ""))
+    );
+    const { txs_url, token_txs_url, oklink_data } = this.get_oklink_variables(
+      url,
+      oklink_currencies
     );
     for (let currency of oklink_currencies) {
       if (!Object.keys(requests_addresses).includes(currency)) {
@@ -188,10 +195,9 @@ class OKLINK extends TanganyParams {
       for (const address of requests_addresses[currency.toLowerCase()]) {
         logger.info(`Requesting Oklink ${currency}`);
         const oklink_params = this.get_oklink_params(currency, address);
-        let token_txs_data = [];
         if (!["btc", "doge"].includes(currency)) {
-          all_addresses_cash_mvts.tokentx = [
-            ...(all_addresses_cash_mvts.tokentx?.[currency] || []),
+          oklink_data[currency].tokentx = [
+            ...(oklink_data[currency]?.tokentx || []),
             ...(await this.paginate_oklink(
               from_date,
               to_date,
@@ -201,8 +207,8 @@ class OKLINK extends TanganyParams {
             )),
           ];
         }
-        all_addresses_cash_mvts.txlist = [
-          ...(all_addresses_cash_mvts.txlist?.[currency] || []),
+        oklink_data[currency].txlist = [
+          ...(oklink_data[currency]?.txlist || []),
           ...(await this.paginate_oklink(
             from_date,
             to_date,
@@ -215,7 +221,7 @@ class OKLINK extends TanganyParams {
       }
     }
 
-    return all_addresses_cash_mvts;
+    return oklink_data;
   }
 }
 module.exports = OKLINK;

@@ -1,16 +1,19 @@
 const TanganyParams = require("./config/tangany_params");
 const FlowController = require("./controllers/flow_controller");
+const fs = require("fs");
+
 var logger = require("tracer").console();
 
 async function main() {
   try {
     let flow_controller = new FlowController();
     let tangany_params_instance = new TanganyParams();
-    let from_date = "2023-01-13 23:59:59";
-    let to_date = "2023-05-14 23:59:59";
+    let from_date = "2023-09-13 23:59:59";
+    let to_date = "2024-01-25 23:59:59";
     // let from_date = null;
     // let to_date = null;
-    const requests_addresses = await tangany_params_instance.address_service_instance.get_requests_addresses()
+    const requests_addresses =
+      await tangany_params_instance.address_service_instance.get_requests_addresses();
     logger.info(
       `Input dates to be used in the custodians requests: from_date:${from_date}, to_date:${to_date}`
     );
@@ -23,7 +26,12 @@ async function main() {
       "Fetching clients wallets and tradias wallets , collecting custodians currencies data"
     );
     let collected_currencies_data =
-      await flow_controller.collect_currencies_data(from_date, to_date,requests_addresses);
+      await flow_controller.collect_currencies_data(
+        from_date,
+        to_date,
+        requests_addresses
+      );
+
     logger.info(
       "Finished collecting custodians currencies data, proceeding with fiat data"
     );
@@ -35,11 +43,16 @@ async function main() {
     await flow_controller.parse_data(
       collected_currencies_data,
       clients_wallets,
-      tradias_wallets
+      tradias_wallets,
+      from_date,
+      to_date
     );
     logger.info("Finished parsing data, pushing data to the server");
 
-    // await flow_controller.push_transactions(flow_controller.cash_mvts);
+    await flow_controller.push_transactions(flow_controller.cash_mvt, {
+      ...clients_wallets,
+      ...tradias_wallets,
+    });
   } catch (e) {
     logger.error(e);
   }

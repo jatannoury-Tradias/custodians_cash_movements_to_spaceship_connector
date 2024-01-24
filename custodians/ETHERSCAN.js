@@ -11,46 +11,47 @@ class Etherscan extends TanganyParams {
       url += `${key}=${params[key]}&`;
     });
     return await fetch(url).then(async (res) => {
-      return await response_parser(res, 200, `Etherscan for address ${params.address}`);
+      return await response_parser(
+        res,
+        200,
+        `Etherscan for address ${params.address}`
+      );
     });
   }
   async eth_request(url, from_date = null, to_date = null, requests_addresses) {
     let all_addresses_cash_mvts = {
       tokentx: [],
       txlist: [],
-      internal: [],
     };
+    const {
+      ETH_ERCTOKEN_queryParams,
+      ETH_INTERNAL_queryParams,
+      ETH_NORMAL_queryParams,
+    } = await this.get_eth_params(from_date, to_date);
     for (const address of requests_addresses.etherscan) {
-      const {
-        ETH_ERCTOKEN_queryParams,
-        ETH_INTERNAL_queryParams,
-        ETH_NORMAL_queryParams,
-      } = await this.get_eth_params(address, from_date, to_date);
+      ETH_ERCTOKEN_queryParams.address = address;
+      ETH_NORMAL_queryParams.address = address;
       await sleep(1000);
       let erc_request = await this.do_eth_request(
         url,
         ETH_ERCTOKEN_queryParams
       );
-      let int_request = await this.do_eth_request(
-        url,
-        ETH_INTERNAL_queryParams
-      );
       let normal_request = await this.do_eth_request(
         url,
         ETH_NORMAL_queryParams
       );
-      all_addresses_cash_mvts.tokentx = [
-        ...all_addresses_cash_mvts.tokentx,
-        ...erc_request?.["result"],
-      ];
-      all_addresses_cash_mvts.txlist = [
-        ...all_addresses_cash_mvts.txlist,
-        ...normal_request?.["result"],
-      ];
-      all_addresses_cash_mvts.internal = [
-        ...all_addresses_cash_mvts.internal,
-        ...int_request?.["result"],
-      ];
+      if (Array.isArray(erc_request?.result)) {
+        all_addresses_cash_mvts.tokentx = [
+          ...all_addresses_cash_mvts.tokentx,
+          ...erc_request?.["result"],
+        ];
+      }
+      if (Array.isArray(normal_request?.result)) {
+        all_addresses_cash_mvts.txlist = [
+          ...all_addresses_cash_mvts.txlist,
+          ...normal_request?.["result"],
+        ];
+      }
       await sleep(this.mapped_timeouts.etherscan);
     }
     return all_addresses_cash_mvts;

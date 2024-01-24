@@ -21,20 +21,30 @@ class CustodianResponseParser extends CashMvtsMapper {
       return {};
     }
     if (!source_address || !destination_address) {
-      console.log();
+      logger.error(
+        `The following cash mvt failed to be parse: ${JSON.stringify(element)}`
+      );
     }
-    const source_address_is_client_address = Object.keys(
-      clients_wallets
-    ).includes(source_address?.toLowerCase());
-    const source_address_is_tradias_address = Object.keys(
-      tradias_wallets
-    ).includes(source_address?.toLowerCase());
-    const destination_address_is_client_address = Object.keys(
-      clients_wallets
-    ).includes(destination_address.toLowerCase());
-    const destination_address_is_tradias_address = Object.keys(
-      tradias_wallets
-    ).includes(destination_address.toLowerCase());
+    let source_address_is_client_address;
+    let source_address_is_tradias_address;
+    let destination_address_is_client_address;
+    let destination_address_is_tradias_address;
+    try {
+      source_address_is_client_address = Object.keys(clients_wallets).includes(
+        source_address?.toLowerCase()
+      );
+      source_address_is_tradias_address = Object.keys(tradias_wallets).includes(
+        source_address?.toLowerCase()
+      );
+      destination_address_is_client_address = Object.keys(
+        clients_wallets
+      ).includes(destination_address.toLowerCase());
+      destination_address_is_tradias_address = Object.keys(
+        tradias_wallets
+      ).includes(destination_address.toLowerCase());
+    } catch (error) {
+      logger.error(error);
+    }
     return {
       source_address,
       destination_address,
@@ -63,15 +73,16 @@ class CustodianResponseParser extends CashMvtsMapper {
     );
     if (replaced_value === undefined) {
       logger.warn(
-        `Couldn't extract data for config_key of ${config_key} having config_value of ${config_value} for custodian ${custodian}`
-      );
-      return undefined;
-    } else if (replaced_value.includes("undefined")) {
-      logger.warn(
-        `Couldn't extract data for config_key of ${config_key} having config_value of ${config_value} for custodian ${custodian}`
+        `PARSE: Couldn't extract data for config_key of ${config_key} having config_value of ${config_value} for custodian ${custodian}`
       );
       return undefined;
     }
+    // else if (replaced_value.includes("undefined")) {
+    //   logger.warn(
+    //     `PARSE: Couldn't extract data for config_key of ${config_key} having config_value of ${config_value} for custodian ${custodian}`
+    //   );
+    //   return undefined;
+    // }
     return eval(replaced_value);
     if (config_value.includes("not equal")) {
       let splitted_values = config_value.split("not equal");
@@ -110,9 +121,9 @@ class CustodianResponseParser extends CashMvtsMapper {
       // Return the value to replace the matched pattern
       return replacedValue;
     });
-    if (modified_expression.includes("undefined")) {
-      return undefined;
-    }
+    // if (modified_expression.includes("undefined")) {
+    //   return undefined;
+    // }
     return modified_expression;
   }
   parse_value_access_from_syntax(config_value, cash_mvt) {
@@ -206,7 +217,8 @@ class CustodianResponseParser extends CashMvtsMapper {
     cash_mvt,
     mapped_data,
     tradias_wallets,
-    clients_wallets
+    clients_wallets,
+    reference
   ) {
     let counterparty = config_key
       .toLowerCase()
@@ -218,9 +230,9 @@ class CustodianResponseParser extends CashMvtsMapper {
       tradias_wallets[mapped_data[counterparty]?.toLowerCase()];
     if (!spaceship_wallets_lookup) {
       logger.warn(
-        `${mapped_data[
+        `PARSE: ${mapped_data[
           counterparty
-        ]?.toLowerCase()} address not found in spaceship`
+        ]?.toLowerCase()} address not found in spaceship. Reference: ${reference}`
       );
       return undefined;
     }
@@ -255,9 +267,6 @@ class CustodianResponseParser extends CashMvtsMapper {
       return cash_mvt[config_value.toLowerCase()];
     }
   }
-  
-
-  
 }
 
 module.exports = CustodianResponseParser;

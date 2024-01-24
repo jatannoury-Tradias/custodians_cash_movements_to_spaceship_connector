@@ -85,7 +85,7 @@ class SpaceshipController {
       all_responses = [...all_responses, ...response["items"]];
     }
     if (all_responses.length > total_count) {
-      throw `Something went wrong while fetching the addresses since we got ${all_responses.length} addresses while total_count = ${total_count}`;
+      throw `PARSE: Something went wrong while fetching the addresses since we got ${all_responses.length} addresses while total_count = ${total_count}`;
     }
     return all_responses;
   }
@@ -120,7 +120,10 @@ class SpaceshipController {
 
     return json_response;
   }
-  async post_transaction(cash_mvt) {
+  async post_transaction(cash_mvt, addresses_mappings) {
+    if (!(cash_mvt.executed_at instanceof Date)) {
+      cash_mvt.executed_at = new Date(cash_mvt.executed_at);
+    }
     let response = await fetch(
       `https://${this.env.toLowerCase()}.tradias.link/api/transactions`,
       {
@@ -130,21 +133,20 @@ class SpaceshipController {
           ...(await this.user_headers()),
         },
         body: JSON.stringify({
-          value_date: parseInt(
-            new Date(cash_mvt["cash_mvt_date"]).getTime() / 1000
-          ),
-          sender_address_id: cash_mvt["source_address_id"],
-          receiver_address_id: cash_mvt["destination_address_id"],
-          amount: parseFloat(cash_mvt["cash_mvt_amnt"]).toString(),
-          currency: cash_mvt["cash_mvt_curr_code"].toUpperCase(),
-          reference: cash_mvt["cash_mvt_reference"],
-          reference_type: "ON_CHAIN_TRANSACTION_ID",
-          type: "SETTLEMENT",
+          value_date: parseInt(cash_mvt.executed_at.getTime() / 1000),
+          sender_address_id: addresses_mappings[cash_mvt.sender_address].id,
+          receiver_address_id: addresses_mappings[cash_mvt.recipient_address].id,
+          amount: parseFloat(cash_mvt.amount).toString(),
+          currency: cash_mvt.currency_code.toUpperCase(),
+          reference: cash_mvt.reference,
+          reference_type: cash_mvt['reference_type'],
+          type: cash_mvt.transaction_type.toUpperCase(),
         }),
       }
     );
 
     let json_response = await response.json();
+    console.log('first')
   }
   async get_custodians(return_json_response = false) {
     let response = await fetch(
@@ -160,6 +162,17 @@ class SpaceshipController {
       this.custodians[item["id"]] = item["name"];
     }
     return return_json_response ? json_response : response;
+  }
+  async get_supported_currencies() {
+    return await fetch(
+      `https://${this.env.toLowerCase()}.tradias.link/api/currencies/?limit=1000`,
+      {
+        method: "GET",
+        headers: await this.user_headers(),
+      }
+    )
+      .then(async (res) => await res.json())
+      .then((res) => res.items.map((element) => element.currency_code));
   }
 }
 async function spaceship_addresses_caller() {

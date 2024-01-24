@@ -126,6 +126,9 @@ class CustodiansRequests extends TanganyController {
     ).then(async (res) => {
       return await response_parser(res, 200, "DLT");
     });
+    if (promise === undefined) {
+      return this.make_dlt_api_request(request_type, from_date, to_date);
+    }
     return promise.records;
   }
 }

@@ -65,7 +65,7 @@ class FINOA extends FiatParams {
       this.finoa_data.finoa_confirm_code;
     var authorization = btoa(accountCredentials);
 
-    var signature = this.get_digest(timestamp, url);
+    var signature = this.get_digest(timestamp, `/v1/transactions`);
 
     this.authorization_headers = {
       "Finoa-Api-Digest": signature,
@@ -83,21 +83,32 @@ class FINOA extends FiatParams {
       this.finoa_data.finoa_confirm_code;
     var authorization = btoa(accountCredentials);
 
-    var signature = this.get_digest(timestamp, url);
-
+    var signature = this.get_digest(timestamp, `/v1/transactions`);
+    const HEADERS = {
+      "Finoa-Api-Key": this.finoa_data.finoa_key,
+      Date: timestamp,
+      Authorization: `Basic ${authorization}`,
+      "Finoa-Api-Digest": signature,
+      "Content-Type": "application/json",
+    };
     let res = await fetch(`${url}/v1/transactions`, {
       method: "GET",
-      headers: {
-        "Finoa-Api-Digest": signature,
-        Authorization: `Basic ${authorization}`,
-        Date: timestamp,
-        "Finoa-Api-Key": this.finoa_data.finoa_key,
-      },
+      headers: HEADERS,
+    }).then(async (res) => {
+      let content = await res.text();
+      let json_content = await res.json();
+      console.log("first");
     });
 
     console.log(res.statusText);
   }
 }
-let test = new FINOA();
-test.finoa_request(FINOA_URL);
+
 module.exports = FINOA;
+if (require.main === module) {
+  async function initialize() {
+    let test = new FINOA();
+    await test.finoa_request(FINOA_URL);
+  }
+  initialize();
+}

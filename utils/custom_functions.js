@@ -10,16 +10,20 @@ function oklink_super_specials_to(cash_mvt) {
     return addresses[cash_mvt.transactionSymbol];
   }
   let to_arr = cash_mvt.from.split(",");
-  to_arr = new Set(
-    to_arr.filter(
-      (element) => element !== addresses[cash_mvt.transactionSymbol]
-    )
-  );
+  to_arr = [
+    ...new Set(
+      to_arr.filter(
+        (element) => element !== addresses[cash_mvt.transactionSymbol]
+      )
+    ),
+  ];
   if (to_arr.length === 1) {
     return to_arr[0];
   } else if (to_arr.length === 2) {
-    console.log(
-      `Couldn't recognize the to address for the following payload: ${cash_mvt}`
+    logger.error(
+      `Couldn't recognize the to address for the following payload: ${JSON.stringify(
+        cash_mvt
+      )}`
     );
     return undefined;
   }
@@ -29,16 +33,20 @@ function oklink_super_specials_from(cash_mvt) {
     return addresses[cash_mvt.transactionSymbol];
   }
   let to_arr = cash_mvt.from.split(",");
-  to_arr = new Set(
-    to_arr.filter(
-      (element) => element !== addresses[cash_mvt.transactionSymbol]
-    )
-  );
+  to_arr = [
+    ...new Set(
+      to_arr.filter(
+        (element) => element !== addresses[cash_mvt.transactionSymbol]
+      )
+    ),
+  ];
   if (to_arr.length === 1) {
     return to_arr[0];
   } else if (to_arr.length === 2) {
     console.log(
-      `Couldn't recognize the to address for the following payload: ${cash_mvt}`
+      `Couldn't recognize the to address for the following payload: ${JSON.stringify(
+        cash_mvt
+      )}`
     );
     return undefined;
   }

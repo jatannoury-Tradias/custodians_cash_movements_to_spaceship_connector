@@ -30,20 +30,27 @@ class HBAR extends TanganyParams {
       txlist: [],
     };
     for (let address of requests_addresses.hbar) {
-      let curr_hbar_data = [];
+      let curr_hbar_data = { txlist: [] };
       let params = this.get_hbar_params(from_date, to_date, address);
-      url = `${url}/${address}/transactions?`;
-
-      let hbar_res = await this.do_hbar_request(url, params, address);
-      curr_hbar_data = [...hbar_res["data"]];
+      let hbar_res = await this.do_hbar_request(
+        `${url}/${address}/transactions?`,
+        params,
+        address
+      );
+      curr_hbar_data.txlist = [...hbar_res["data"]];
       //PAGINATION
-      while (hbar_res["totalCount"] - curr_hbar_data.length !== 0) {
-        let from = curr_hbar_data.length;
-        let hbar_res = await this.do_hbar_request(url, params, address, from);
-        curr_hbar_data.txlist = [...curr_hbar_data, ...hbar_res["data"]];
+      while (hbar_res["totalCount"] - curr_hbar_data.txlist.length !== 0) {
+        let from = curr_hbar_data.txlist.length;
+        let hbar_res = await this.do_hbar_request(
+          `${url}/${address}/transactions?`,
+          params,
+          address,
+          from
+        );
+        curr_hbar_data.txlist = [...curr_hbar_data.txlist, ...hbar_res["data"]];
       }
-      all_hbar_data.txlist = [...all_hbar_data.txlist, ...curr_hbar_data];
-      await sleep(this.mapped_timeouts.hbar)
+      all_hbar_data.txlist = [...all_hbar_data.txlist, ...curr_hbar_data.txlist];
+      await sleep(this.mapped_timeouts.hbar);
     }
 
     return all_hbar_data;

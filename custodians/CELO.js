@@ -17,14 +17,16 @@ class CELO extends TanganyParams {
     });
   }
   async filter_celo_response(celo_res, from_date, to_date) {
-    return celo_res?.result.filter(
-      (element) =>
-        !this.date_is_between_input_dates(
-          parseInt(element.timeStamp) * 1000,
-          from_date,
-          to_date
+    return Array.isArray(celo_res?.result)
+      ? celo_res.result.filter(
+          (element) =>
+            !this.date_is_between_input_dates(
+              parseInt(element.timeStamp) * 1000,
+              from_date,
+              to_date
+            )
         )
-    );
+      : [];
   }
   async celo_request(url, from_date, to_date, requests_addresses) {
     let all_celo_res = {
@@ -45,21 +47,22 @@ class CELO extends TanganyParams {
         to_date,
         address
       );
+
       all_celo_res.tokentx = [
         ...all_celo_res.tokentx,
-        await this.filter_celo_response(
+        ...(await this.filter_celo_response(
           await this.do_celo_request(url, txlist_params, from_date, to_date)
-        ),
+        )),
       ];
       all_celo_res.txlist = [
         ...all_celo_res.txlist,
-        await this.filter_celo_response(
+        ...(await this.filter_celo_response(
           await this.do_celo_request(url, tokentx_params, from_date, to_date)
-        ),
+        )),
       ];
       await sleep(this.mapped_timeouts.celo);
     }
     return all_celo_res;
   }
 }
-module.exports = CELO;
+module.exports = CELO;  

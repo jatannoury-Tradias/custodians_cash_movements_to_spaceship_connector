@@ -263,7 +263,9 @@ class TanganyParams {
     } else if (currency === "arb") {
       chainShortName = "arbitrum";
     } else if (address === undefined) {
-      throw new Error(`ADDRESS OF ${currency} NOT FOUND IN SPACESHIP`);
+      throw new Error(
+        `ADDRESS ${address} OF ${currency} NOT FOUND IN SPACESHIP`
+      );
     }
     return {
       chainShortName,
@@ -282,24 +284,21 @@ class TanganyParams {
       toTime: end_time_timestamp,
     };
   }
-  async get_eth_params(address, from_date = null, to_date = null) {
+  async get_eth_params(from_date = null, to_date = null) {
     var ETH_NORMAL_queryParams = {
       module: "account",
       action: "txlist",
-      address: address,
       apikey: this.eth_tradias_api_key,
     };
     var ETH_INTERNAL_queryParams = {
       module: "account",
       action: "txlistinternal",
-      address: address,
       apikey: this.eth_tradias_api_key,
     };
 
     var ETH_ERCTOKEN_queryParams = {
       module: "account",
       action: "tokentx",
-      address: address,
       apikey: this.eth_tradias_api_key,
     };
     let current_date =

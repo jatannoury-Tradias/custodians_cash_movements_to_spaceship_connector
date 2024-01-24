@@ -6,6 +6,7 @@ const {
 const { response_parser } = require("../utils/response_parser");
 const sleep = require("../utils/sleep");
 require("dotenv").config();
+var logger = require("tracer").console();
 
 class SOL extends TanganyParams {
   constructor() {
@@ -84,7 +85,7 @@ class SOL extends TanganyParams {
             )
             .filter((element) => Object.keys(element).length !== 0);
     } catch (error) {
-      console.log("first");
+      logger.error(`FETCH: Error happened for SOL request ${error}`);
     }
   }
   async sol_request(url, from_date, to_date, requests_addresses) {
